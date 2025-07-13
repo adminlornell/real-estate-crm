@@ -76,7 +76,7 @@ export default function DocumentTemplatesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((template) => (
+            {(templates || []).map((template) => (
               <Card key={template.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -114,7 +114,7 @@ export default function DocumentTemplatesPage() {
           </div>
         )}
 
-        {!templatesLoading && !templatesError && templates.length === 0 && (
+        {!templatesLoading && !templatesError && (!templates || templates.length === 0) && (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Templates Available</h3>

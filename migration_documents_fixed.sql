@@ -232,6 +232,89 @@ WHERE NOT EXISTS (
     SELECT 1 FROM document_templates WHERE document_type = 'listing_agreement_lease'
 );
 
+INSERT INTO document_templates (name, description, document_type, template_fields, template_content)
+SELECT
+    'Exclusive Leasing Agency Agreement',
+    'Exclusive leasing agency agreement for commercial properties',
+    'exclusive_leasing_agency',
+    '[
+        {"name": "effective_date", "label": "Effective Date", "type": "date", "required": true},
+        {"name": "landlord_name", "label": "Landlord Name", "type": "text", "required": true},
+        {"name": "landlord_address", "label": "Landlord Address", "type": "text", "required": true},
+        {"name": "agreement_expiration_date", "label": "Agreement Expiration Date", "type": "date", "required": true},
+        {"name": "property_address", "label": "Property Address", "type": "text", "required": true},
+        {"name": "sole_broker_commission", "label": "Sole Broker Commission (%)", "type": "number", "required": true, "default": 5},
+        {"name": "co_broker_commission", "label": "Co-Broker Commission (%)", "type": "number", "required": true, "default": 6},
+        {"name": "subsequent_term_commission", "label": "Subsequent Term Commission (%)", "type": "number", "required": true, "default": 1.5},
+        {"name": "sale_commission_co_broker", "label": "Sale Commission - Co-Broker (%)", "type": "number", "required": true, "default": 6},
+        {"name": "sale_commission_unrepresented", "label": "Sale Commission - Unrepresented (%)", "type": "number", "required": true, "default": 5},
+        {"name": "broker_name", "label": "Broker Name", "type": "text", "required": true, "default": "LORNELL REAL ESTATE, LLC"},
+        {"name": "broker_address", "label": "Broker Address", "type": "text", "required": true, "default": "22 CHERRY STREET, SPENCER, MA 01562"}
+    ]'::jsonb,
+    '<div class="document-container" style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <p><strong>DATE: {{effective_date}}</strong></p>
+            <h1 style="margin-top: 20px;">EXCLUSIVE LEASING AGENCY AGREEMENT</h1>
+        </div>
+        
+        <p>This Exclusive Leasing Agency Agreement (the "Agreement") is made as of <strong>{{effective_date}}</strong> (the "Effective Date") by and between <strong>{{landlord_name}}</strong> of <strong>{{landlord_address}}</strong> ("LANDLORD") and <strong>{{broker_name}}</strong>, of <strong>{{broker_address}}</strong> ("BROKER"). In consideration of the mutual covenants set forth below, LANDLORD and BROKER agree as follows:</p>
+        
+        <h2>1. Term of Agency.</h2>
+        <p>This Agreement begins on the Effective Date and expires on <strong>{{agreement_expiration_date}}</strong> (the "Term").</p>
+        
+        <h2>2. Exclusive Leasing Agency.</h2>
+        <p>LANDLORD grants to BROKER the exclusive right to procure residential and/or commercial tenants for the commercial suites at <strong>{{property_address}}</strong> (the "Property"). LANDLORD further agrees to refer all potentially acceptable tenants to BROKER during the Term of this Agreement and agrees to notify all other real estate agents or brokers who communicate with LANDLORD of BROKER''s exclusive agency relationship with LANDLORD. The final decision whether or not a tenant is acceptable for leasing the Property shall be solely within the discretion of LANDLORD.</p>
+        
+        <h2>3. Broker''s Representations and Duties.</h2>
+        <p style="margin-bottom: 16px;"><strong>(a)</strong> BROKER represents that it is duly licensed as a real estate broker by the State of Massachusetts.</p>
+        <p style="margin-bottom: 16px;"><strong>(b)</strong> BROKER agrees to use reasonable efforts to locate tenants acceptable to LANDLORD and to assist LANDLORD to negotiate terms and conditions of a lease acceptable to LANDLORD. BROKER agrees to assist in locating tenants, arrange showings, give advice concerning real estate practices and procedures, assist in negotiations, and coordinate activities throughout the process.</p>
+        
+        <h2>4. Landlord''s Representations and Duties.</h2>
+        <p style="margin-bottom: 16px;"><strong>(a)</strong> LANDLORD agrees to work exclusively with BROKER for the leasing of the Property during the Term of this Agreement, conduct all negotiations with the knowledge and assistance of BROKER, refer all inquiries concerning leasing the Property to BROKER, and cooperate in marketing the Property for lease.</p>
+        <p style="margin-bottom: 16px;"><strong>(b)</strong> LANDLORD represents that LANDLORD is not subject to any earlier agency agreement with any other broker or any protection period with respect to the leasing of the Property.</p>
+        <p style="margin-bottom: 16px;"><strong>(c)</strong> LANDLORD agrees to advise BROKER of any potential tenant interested in leasing the Property about which LANDLORD was previously advised by any other person and advises each potential tenant or broker of LANDLORD''s exclusive agency relationship with BROKER as established herein.</p>
+        <p style="margin-bottom: 16px;"><strong>(d)</strong> LANDLORD understands that this Agreement does not relieve LANDLORD of the duty to exercise due diligence for LANDLORD''s own protection, including the duty to investigate any information of importance to the LANDLORD.</p>
+        <p style="margin-bottom: 16px;"><strong>(e)</strong> LANDLORD agrees that BROKER''s services as set forth herein do not constitute a guarantee or warranty concerning the leasing of the Property. LANDLORD agrees that BROKER has not been retained as an attorney, investment advisor, inspector, home inspector, pest/termite inspector, septic inspector, surveyor, or to otherwise determine the condition of the Property, and has not been retained to provide legal advice, to provide an opinion concerning lawfulness of current or anticipated uses, to perform a title search, or to act as a mortgage broker. LANDLORD agrees that BROKER shall have no duty to disclose any matter or condition outside the boundaries of the Property, including, but not limited to, present conditions and anticipated changes in the neighborhood where the Property is located. BROKER recommends that an attorney and other professionals be hired for such services as LANDLORD deems appropriate and that LANDLORD personally investigate particular matters which may be of importance, including, but not limited to, neighborhood composition, the level of crime and presence of sex offenders.</p>
+        <p style="margin-bottom: 16px;"><strong>(f)</strong> LANDLORD acknowledges that the BROKER represents other landlords who may be interested in the same or similar tenants as LANDLORD. LANDLORD consents to such representation and agrees that it will not constitute a breach of duty or breach of contract for the BROKER to introduce other landlords to prospective tenants or to assist them with the leasing of such property.</p>
+        <p style="margin-bottom: 16px;"><strong>(g)</strong> BROKER is authorized to disclose LANDLORD''s identity and to cooperate with and pay compensation to other brokers in connection with the performance of BROKER''s services.</p>
+        
+        <h2>5. Broker''s Compensation.</h2>
+        <p style="margin-bottom: 16px;"><strong>(a)</strong> LANDLORD agrees to pay BROKER as follows:</p>
+        <p style="margin-bottom: 16px;"><strong>(i)</strong> If during the Term of this Agreement, the Property is leased to a tenant for a term of more than one (1) month, then LANDLORD agrees to pay BROKER (i) {{sole_broker_commission}}%, if sole brokered, or {{co_broker_commission}}% if Co-Brokered, of the gross rent due in the initial term of any such lease agreement between the LANDLORD and tenant and (ii) {{subsequent_term_commission}}% of the gross rent due in each subsequent term of any such lease agreement (the "Subsequent Payments").</p>
+        <p style="margin-bottom: 16px;"><strong>(ii)</strong> If within the term of this Agreement or any extension the PROPERTY is sold or the BROKER procures a buyer who is ready, willing and able to buy at a price and on the terms set forth herein or on such other price and terms as the LANDLORD may agree, the BROKER shall be due a fee of {{sale_commission_co_broker}}% of the gross selling price if a co-brokerage represents the buyer and {{sale_commission_unrepresented}}% if the buyer is unrepresented, whether or not the transaction closes or title passes. Said fee shall be paid at the time set for closing and may be deducted from amounts held by BROKER as escrow agent. The aforesaid fee shall also be due upon sale within 6 months after expiration of this Agreement or any extension to any person who is introduced to the PROPERTY during the aforesaid term or any extension, except if the LANDLORD has entered into an exclusive agreement with another broker in good faith. The BROKER shall also be entitled to reimbursement from the LANDLORD for each of the expenses identified in the attached Addendum A which shall be payable within 30 days of the billing date.</p>
+        <p style="margin-bottom: 16px;"><strong>(iii)</strong> LANDLORD agrees that the First Payment shall be due the BROKER upon the tenant''s signing of such lease agreement. In the event that, within 90 days following the expiration of this Agreement, LANDLORD or any person acting for or with LANDLORD successfully leases the Property to a tenant after becoming aware of said tenant or receiving information about said tenant during the term of this Agreement, BROKER''s compensation shall be due as set forth here.</p>
+        <p style="margin-bottom: 16px;"><strong>(iv)</strong> LANDLORD agrees that BROKER''s compensation due hereunder is not contingent on any payment by the tenant, or any cooperating broker, and in the event that the tenant, or any cooperating broker, does not pay compensation to BROKER, LANDLORD shall be responsible for payment in full of any compensation due hereunder.</p>
+        
+        <h2>6. No Joint Venture.</h2>
+        <p>This Agreement does not create a partnership or joint venture relationship. This Agreement shall not be construed to create any obligation to enter into any other contract between or among the Parties or to support any claim for reimbursement of costs for efforts expended by either Party.</p>
+        
+        <h2>7. Entire Agreement/Governing Law.</h2>
+        <p>This Agreement is the entire agreement between the parties. It is binding upon the parties'' heirs, successors, and personal representatives. Assignment shall not limit the rights of BROKER. This Agreement shall be governed by the laws of the Commonwealth of Massachusetts. Unless otherwise stated, this Agreement may not be modified, except in writing signed by both parties.</p>
+        
+        <div style="margin-top: 60px;">
+            <h2>AGREED AND ACCEPTED:</h2>
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+                <div style="width: 45%;">
+                    <p>____________________________</p>
+                    <p>{{landlord_name}}</p>
+                    <p>SELLER/LANDLORD</p>
+                    <p style="margin-top: 20px;">Date: _______________</p>
+                </div>
+                
+                <div style="width: 45%;">
+                    <p>____________________________</p>
+                    <p>{{broker_name}}</p>
+                    <p>BROKER</p>
+                    <p style="margin-top: 20px;">Date: _______________</p>
+                </div>
+            </div>
+        </div>
+    </div>'
+WHERE NOT EXISTS (
+    SELECT 1 FROM document_templates WHERE document_type = 'exclusive_leasing_agency'
+);
+
 -- Update timestamps trigger (create if not exists)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

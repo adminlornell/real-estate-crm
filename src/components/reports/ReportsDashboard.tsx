@@ -383,20 +383,20 @@ export default function ReportsDashboard() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-4 border-b-2 font-medium text-sm transition-all duration-200 rounded-t-lg ${
               activeTab === 'overview'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
+                ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
+                : 'border-transparent text-gray-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50'
             }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('advanced')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-4 border-b-2 font-medium text-sm transition-all duration-200 rounded-t-lg ${
               activeTab === 'advanced'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
+                ? 'border-blue-500 text-blue-600 bg-blue-50 shadow-sm'
+                : 'border-transparent text-gray-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50'
             }`}
           >
             Advanced Analytics

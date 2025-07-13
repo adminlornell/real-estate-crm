@@ -26,10 +26,8 @@ export default function DocumentsPage() {
   const {
     documents,
     documentsLoading,
-    documentsError,
     fetchDocuments,
-    deleteDocument,
-    generatePDF
+    deleteDocument
   } = useDocumentStore();
 
   useEffect(() => {
@@ -56,8 +54,8 @@ export default function DocumentsPage() {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         return (
-          doc.title.toLowerCase().includes(searchLower) ||
-          doc.document_type.toLowerCase().includes(searchLower) ||
+          doc.title?.toLowerCase().includes(searchLower) ||
+          doc.document_type?.toLowerCase().includes(searchLower) ||
           (doc as any).clients?.name?.toLowerCase().includes(searchLower) ||
           (doc as any).properties?.address?.toLowerCase().includes(searchLower)
         );
@@ -70,17 +68,17 @@ export default function DocumentsPage() {
       
       switch (sortBy) {
         case 'title':
-          aValue = a.title.toLowerCase();
-          bValue = b.title.toLowerCase();
+          aValue = (a.title || '').toLowerCase();
+          bValue = (b.title || '').toLowerCase();
           break;
         case 'document_status':
-          aValue = a.document_status;
-          bValue = b.document_status;
+          aValue = a.document_status || '';
+          bValue = b.document_status || '';
           break;
         case 'created_at':
         default:
-          aValue = new Date(a.created_at);
-          bValue = new Date(b.created_at);
+          aValue = new Date(a.created_at || '');
+          bValue = new Date(b.created_at || '');
           break;
       }
       
@@ -103,10 +101,8 @@ export default function DocumentsPage() {
   };
 
   const handleGeneratePDF = async (documentId: string) => {
-    const pdfUrl = await generatePDF(documentId);
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-    }
+    // TODO: Implement PDF generation
+    console.log('Generate PDF for document:', documentId);
   };
 
   const handleDeleteDocument = async (documentId: string) => {
@@ -254,8 +250,8 @@ export default function DocumentsPage() {
                   >
                     <option value="all">All Document Types</option>
                     {documentTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      <option key={type} value={type || ''}>
+                        {(type || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </option>
                     ))}
                   </select>
@@ -332,12 +328,7 @@ export default function DocumentsPage() {
             </div>
           ) : null}
 
-          {/* Error Display */}
-          {documentsError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-800">{documentsError}</p>
-            </div>
-          )}
+
 
         {/* Loading State */}
         {documentsLoading ? (
@@ -362,80 +353,100 @@ export default function DocumentsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDocuments.length === 0 ? (
               <div className="col-span-full text-center py-12">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-                <p className="text-gray-600 mb-6">
-                  {selectedTab === 'all' 
-                    ? "You haven't created any documents yet."
-                    : `No ${selectedTab} documents found.`
-                  }
+                <p className="text-gray-500">
+                  {searchTerm || documentTypeFilter !== 'all' 
+                    ? 'Try adjusting your filters or search terms' 
+                    : 'Create your first document to get started'}
                 </p>
-                <Link href="/documents/create">
+                <Link href="/documents/create" className="inline-block mt-4">
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
-                    Create Your First Document
+                    Create Document
                   </Button>
                 </Link>
               </div>
             ) : (
               filteredDocuments.map((document) => (
-                <Card key={document.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
+                <Card key={document.id} className="group hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 hover:border-l-blue-600 bg-white">
+                  <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg text-gray-900 truncate">
-                          {document.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {(document as any).document_templates?.name || document.document_type}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                          <h3 className="font-semibold text-lg text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                            {document.title}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-gray-600 font-medium mb-1">
+                          {(document as any).document_templates?.name || document.document_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown Type'}
                         </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Clock className="w-3 h-3" />
+                          Created {formatDate(document.created_at || '')}
+                        </div>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        document.document_status === 'draft' 
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : document.document_status === 'finalized'
-                          ? 'bg-blue-100 text-blue-800'
-                          : document.document_status === 'signed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {document.document_status}
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                          document.document_status === 'draft' 
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                            : document.document_status === 'finalized'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : document.document_status === 'signed'
+                            ? 'bg-green-100 text-green-800 border border-green-200'
+                            : 'bg-gray-100 text-gray-800 border border-gray-200'
+                        }`}>
+                          {document.document_status}
+                        </span>
+                        {document.document_status === 'draft' && (
+                          <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                            <AlertCircle className="w-3 h-3" />
+                            Needs attention
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 mb-4">
+                  
+                  <CardContent className="pt-0">
+                    {/* Document Details */}
+                    <div className="space-y-3 mb-4">
                       {(document as any).clients && (
-                        <p className="text-sm text-gray-600">
-                          <strong>Client:</strong> {(document as any).clients.name}
-                        </p>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-gray-600">Client:</span>
+                          <span className="font-medium text-gray-900">{(document as any).clients.first_name} {(document as any).clients.last_name}</span>
+                        </div>
                       )}
                       {(document as any).properties && (
-                        <p className="text-sm text-gray-600">
-                          <strong>Property:</strong> {(document as any).properties.address}
-                        </p>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-gray-600">Property:</span>
+                          <span className="font-medium text-gray-900 truncate">{(document as any).properties.address}</span>
+                        </div>
                       )}
-                      <p className="text-sm text-gray-600">
-                        <strong>Created:</strong> {formatDate(document.created_at)}
-                      </p>
                       {document.finalized_at && (
-                        <p className="text-sm text-gray-600">
-                          <strong>Finalized:</strong> {formatDate(document.finalized_at)}
-                        </p>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span className="text-gray-600">Finalized:</span>
+                          <span className="font-medium text-gray-900">{formatDate(document.finalized_at)}</span>
+                        </div>
                       )}
                     </div>
 
-                    <div className="flex space-x-2">
-                      <Link href={`/documents/${document.id}`}>
-                        <Button variant="outline" size="sm">
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                      <Link href={`/documents/${document.id}`} className="flex-1 min-w-0">
+                        <Button variant="outline" size="sm" className="w-full justify-center hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors">
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </Button>
                       </Link>
                       
                       {document.document_status === 'draft' && (
-                        <Link href={`/documents/${document.id}/edit`}>
-                          <Button variant="outline" size="sm">
+                        <Link href={`/documents/${document.id}/edit`} className="flex-1 min-w-0">
+                          <Button variant="outline" size="sm" className="w-full justify-center hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-colors">
                             <Edit className="w-4 h-4 mr-1" />
                             Edit
                           </Button>
@@ -447,6 +458,7 @@ export default function DocumentsPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => window.open(document.pdf_url!, '_blank')}
+                          className="flex-1 min-w-0 justify-center hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors"
                         >
                           <Download className="w-4 h-4 mr-1" />
                           PDF
@@ -456,6 +468,7 @@ export default function DocumentsPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleGeneratePDF(document.id)}
+                          className="flex-1 min-w-0 justify-center hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors"
                         >
                           <Download className="w-4 h-4 mr-1" />
                           Generate PDF
@@ -466,7 +479,7 @@ export default function DocumentsPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleDeleteDocument(document.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

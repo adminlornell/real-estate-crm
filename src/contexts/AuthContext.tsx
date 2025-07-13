@@ -103,9 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (mounted) {
+        console.log('AuthContext: Timeout reached, setting loading to false')
         setLoading(false)
       }
-    }, 1000) // 1 second timeout
+    }, 5000) // 5 second timeout
 
     initAuth()
 

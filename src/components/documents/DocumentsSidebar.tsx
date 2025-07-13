@@ -126,10 +126,10 @@ export default function DocumentsSidebar({ className = "" }: DocumentsSidebarPro
             return (
               <button
                 key={index}
-                className="w-full flex items-center justify-between p-2 text-sm hover:bg-gray-100 rounded-md transition-colors"
+                className="group w-full flex items-center justify-between p-2 text-sm hover:bg-blue-50 hover:text-blue-600 rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm"
               >
                 <div className="flex items-center">
-                  <IconComponent className="w-4 h-4 mr-2 text-gray-500" />
+                  <IconComponent className="w-4 h-4 mr-2 text-gray-500 group-hover:text-blue-600 transition-colors duration-200" />
                   {type.label}
                 </div>
                 <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">

@@ -6,10 +6,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentStore } from '@/stores/useDocumentStore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { ArrowLeft, Download, Edit, FileText, Home, List, Plus, Settings, Share2, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Edit, FileText, Home, List, Plus, Settings, Share2, Printer, Eye } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import PrintPreview from '@/components/documents/PrintPreview';
 
 interface DocumentWithTemplate {
   id: string;
@@ -32,6 +33,7 @@ export default function DocumentViewPage() {
   const { user } = useAuth();
   const [document, setDocument] = useState<DocumentWithTemplate | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   const { generatePDF } = useDocumentStore();
 
@@ -202,11 +204,20 @@ export default function DocumentViewPage() {
                 
                 <Button 
                   variant="outline" 
+                  className="border-blue-400 text-blue-800 hover:bg-blue-50 font-medium"
+                  onClick={() => setShowPrintPreview(true)}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Print Preview
+                </Button>
+
+                <Button 
+                  variant="outline" 
                   className="border-gray-400 text-gray-800 hover:bg-gray-100 font-medium"
                   onClick={() => window.print()}
                 >
                   <Printer className="w-4 h-4 mr-2" />
-                  Print
+                  Quick Print
                 </Button>
 
                 <Button 
@@ -427,6 +438,26 @@ export default function DocumentViewPage() {
           }
         }
       `}</style>
+
+      {/* Print Preview Modal */}
+      {document && (
+        <PrintPreview
+          isOpen={showPrintPreview}
+          onClose={() => setShowPrintPreview(false)}
+          document={{
+            id: document.id,
+            title: document.title || document.document_name,
+            content: generateContent(),
+            document_templates: document.document_templates,
+            field_values: document.field_values
+          }}
+          onPrint={() => {
+            setShowPrintPreview(false);
+            setTimeout(() => window.print(), 100);
+          }}
+          onDownload={document.pdf_url ? () => window.open(document.pdf_url!, '_blank') : handleGeneratePDF}
+        />
+      )}
     </div>
   );
 }

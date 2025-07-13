@@ -53,6 +53,8 @@ Core tables with relationships:
 - `communications` - Client interaction tracking
 - `activity_logs` - Audit trail for all activities
 - `task_templates` - Workflow templates for task automation
+- `documents` - Document records with template references and field values
+- `document_templates` - Reusable document templates with configurable fields
 
 All tables use RLS policies to ensure agents only access their assigned data.
 
@@ -68,6 +70,7 @@ All tables use RLS policies to ensure agents only access their assigned data.
 - **Primary stores:**
   - `usePropertyStore` (`src/stores/usePropertyStore.ts`) - Property data with filtering
   - `useClientStore` (`src/stores/useClientStore.ts`) - Client management
+  - `useDocumentStore` (`src/stores/useDocumentStore.ts`) - Document and template management
 - Stores include built-in filtering, CRUD operations, and error handling
 - Optimistic updates with proper error rollback
 - Debug logging for property operations
@@ -81,6 +84,7 @@ Component structure follows atomic design:
 - `src/components/clients/` - Client management components
 - `src/components/tasks/` - Task management components
 - `src/components/reports/` - Analytics and reporting
+- `src/components/documents/` - Document management components
 - `src/components/layout/` - Layout components
 - `src/components/navigation/` - Navigation components
 
@@ -143,6 +147,8 @@ Component structure follows atomic design:
   - `migration_activity_logs.sql` - Activity logging system
   - `migration_task_comments.sql` - Task comments functionality
   - `migration_fix_agent_creation.sql` - Agent creation fixes
+  - `migration_documents.sql` / `migration_documents_fixed.sql` - Document management system
+  - `migration_property_*.sql` - Property-related schema updates
 
 ## Advanced Features
 
@@ -161,6 +167,14 @@ Component structure follows atomic design:
 - Communication timeline for client interactions
 - Multiple communication types (email, phone, meeting, notes)
 - Activity logging for all client touchpoints
+
+### Document Management System
+- Document templates with customizable fields (`document_templates` table)
+- Document creation and editing with template-based workflows
+- PDF generation using jsPDF library (`/api/documents/generate-pdf`)
+- Supabase Storage integration for document file management
+- Document status tracking (draft, finalized) with timestamp tracking
+- Template field replacement with dynamic content rendering
 
 ## Testing & Quality
 

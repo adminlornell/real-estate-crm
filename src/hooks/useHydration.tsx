@@ -7,6 +7,13 @@ export function useHydration() {
 
   useEffect(() => {
     setIsHydrated(true)
+    
+    // Fallback timeout in case hydration detection fails
+    const timeout = setTimeout(() => {
+      setIsHydrated(true)
+    }, 1000)
+    
+    return () => clearTimeout(timeout)
   }, [])
 
   return isHydrated

@@ -47,11 +47,18 @@ export default function AgentDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
+      
+      // Check if user exists and has an id
+      if (!user?.id) {
+        console.error('User not found or missing ID')
+        return
+      }
+      
       // Get agent ID from agents table
       const { data: agent } = await supabase
         .from('agents')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .single()
 
       if (!agent) return
@@ -140,12 +147,12 @@ export default function AgentDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+          className="group cursor-pointer hover:shadow-xl hover:shadow-blue-600/10 transition-all duration-200 hover:scale-105 hover:border-blue-200"
           onClick={() => handleCardClick('/properties')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-900">Total Properties</CardTitle>
-            <Home className="h-4 w-4 text-gray-600" />
+            <CardTitle className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">Total Properties</CardTitle>
+            <Home className="h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{stats.totalProperties}</div>
@@ -156,12 +163,12 @@ export default function AgentDashboard() {
         </Card>
 
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+          className="group cursor-pointer hover:shadow-xl hover:shadow-blue-600/10 transition-all duration-200 hover:scale-105 hover:border-blue-200"
           onClick={() => handleCardClick('/clients')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-900">Total Clients</CardTitle>
-            <Users className="h-4 w-4 text-gray-600" />
+            <CardTitle className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">Total Clients</CardTitle>
+            <Users className="h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{stats.totalClients}</div>
@@ -172,12 +179,12 @@ export default function AgentDashboard() {
         </Card>
 
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+          className="group cursor-pointer hover:shadow-xl hover:shadow-blue-600/10 transition-all duration-200 hover:scale-105 hover:border-blue-200"
           onClick={() => handleCardClick('/properties')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-900">Upcoming Showings</CardTitle>
-            <Calendar className="h-4 w-4 text-gray-600" />
+            <CardTitle className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">Upcoming Showings</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{stats.pendingShowings}</div>
@@ -188,12 +195,12 @@ export default function AgentDashboard() {
         </Card>
 
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+          className="group cursor-pointer hover:shadow-xl hover:shadow-blue-600/10 transition-all duration-200 hover:scale-105 hover:border-blue-200"
           onClick={() => handleCardClick('/tasks')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-900">Pending Tasks</CardTitle>
-            <TrendingUp className="h-4 w-4 text-gray-600" />
+            <CardTitle className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">Pending Tasks</CardTitle>
+            <TrendingUp className="h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{stats.pendingTasks}</div>
