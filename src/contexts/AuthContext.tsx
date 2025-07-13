@@ -1,10 +1,19 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { AuthUser, authService } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
+import { User } from '@supabase/supabase-js'
+import { Database } from '@/types/database'
+
+export interface AuthUser extends User {
+  role?: 'agent' | 'team_lead' | 'manager' | 'admin' | 'client'
+}
+
+type Agent = Database['public']['Tables']['agents']['Row']
 
 interface AuthContextType {
   user: AuthUser | null
+  agent: Agent | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<any>
   signUp: (email: string, password: string, metadata?: any) => Promise<any>
@@ -16,50 +25,153 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [agent, setAgent] = useState<Agent | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const fetchAgentData = async (userId: string) => {
+    try {
+      console.log('AuthContext: Fetching agent data for user ID:', userId)
+      
+      const { data: agentData, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      
+      if (error && error.code === 'PGRST116') {
+        console.log('AuthContext: No agent record found, creating new one')
+        // Get user data for email
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        
+        // No agent record exists, create one
+        const { data: newAgent, error: createError } = await supabase
+          .from('agents')
+          .insert({
+            user_id: userId,
+            agent_name: 'New Agent',
+            email: currentUser?.email || '',
+            phone: null,
+            status: 'active',
+            hire_date: new Date().toISOString().split('T')[0],
+          })
+          .select()
+          .single()
+        
+        if (!createError && newAgent) {
+          console.log('AuthContext: Created new agent:', newAgent)
+          setAgent(newAgent)
+        } else {
+          console.error('AuthContext: Error creating agent:', createError)
+        }
+      } else if (!error && agentData) {
+        console.log('AuthContext: Found existing agent:', agentData)
+        setAgent(agentData)
+      } else {
+        console.error('AuthContext: Error fetching agent:', error)
+      }
+    } catch (error) {
+      console.error('Error fetching agent data:', error)
+    }
+  }
+
   useEffect(() => {
-    // Get initial user
-    authService.getCurrentUser().then(({ user }) => {
-      setUser(user as AuthUser)
-      setLoading(false)
-    })
+    let mounted = true
+
+    const initAuth = async () => {
+      try {
+        // Get initial user
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        
+        if (mounted) {
+          setUser(currentUser as AuthUser)
+          
+          // Fetch agent data if user exists
+          if (currentUser) {
+            await fetchAgentData(currentUser.id)
+          }
+          
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error)
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (mounted) {
+        setLoading(false)
+      }
+    }, 1000) // 1 second timeout
+
+    initAuth()
 
     // Listen for auth changes
-    const { data: { subscription } } = authService.onAuthStateChange((user) => {
-      setUser(user)
-      setLoading(false)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (mounted) {
+        const currentUser = session?.user as AuthUser || null
+        setUser(currentUser)
+        
+        if (currentUser) {
+          await fetchAgentData(currentUser.id)
+        } else {
+          setAgent(null)
+        }
+        
+        setLoading(false)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      clearTimeout(timeoutId)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const result = await authService.signIn(email, password)
-    return result
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    return { data, error }
   }
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    const result = await authService.signUp(email, password, metadata)
-    return result
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata,
+      },
+    })
+    return { data, error }
   }
 
   const signOut = async () => {
-    const result = await authService.signOut()
-    if (!result.error) {
+    const { error } = await supabase.auth.signOut()
+    if (!error) {
       setUser(null)
+      setAgent(null)
     }
-    return result
+    return { error }
   }
 
   const resetPassword = async (email: string) => {
-    return await authService.resetPassword(email)
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    return { data, error }
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        agent,
         loading,
         signIn,
         signUp,

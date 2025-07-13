@@ -5,6 +5,9 @@ export interface AuthUser extends User {
   role?: 'agent' | 'team_lead' | 'manager' | 'admin' | 'client'
 }
 
+// Cache for agent data to avoid repeated database calls
+const agentCache = new Map<string, any>()
+
 export const authService = {
   async signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -27,6 +30,8 @@ export const authService = {
   },
 
   async signOut() {
+    // Clear cache on sign out
+    agentCache.clear()
     const { error } = await supabase.auth.signOut()
     return { error }
   },
@@ -65,6 +70,11 @@ export const authService = {
         .select()
         .single()
 
+      if (data && !error) {
+        // Cache the new agent data
+        agentCache.set(userId, data)
+      }
+
       return { data, error }
     } catch (error) {
       console.error('Error creating agent profile:', error)
@@ -76,23 +86,31 @@ export const authService = {
     return supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         try {
-          // Fetch user role from agents table
-          let { data: agent, error } = await supabase
-            .from('agents')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single()
+          let agent = agentCache.get(session.user.id)
           
-          // If no agent record exists, create one
-          if (error && error.code === 'PGRST116') {
-            const agentData = {
-              agent_name: session.user.user_metadata?.agent_name || 'New Agent',
-              email: session.user.email,
-              phone: session.user.user_metadata?.phone || null,
-            }
+          // Only fetch from database if not in cache
+          if (!agent) {
+            const { data: agentData, error } = await supabase
+              .from('agents')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single()
             
-            const { data: newAgent } = await authService.createAgentProfile(session.user.id, agentData)
-            agent = newAgent
+            // If no agent record exists, create one
+            if (error && error.code === 'PGRST116') {
+              const agentMetadata = {
+                agent_name: session.user.user_metadata?.agent_name || 'New Agent',
+                email: session.user.email,
+                phone: session.user.user_metadata?.phone || null,
+              }
+              
+              const { data: newAgent } = await authService.createAgentProfile(session.user.id, agentMetadata)
+              agent = newAgent
+            } else if (!error) {
+              agent = agentData
+              // Cache the agent data
+              agentCache.set(session.user.id, agent)
+            }
           }
           
           const userWithRole = {

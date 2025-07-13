@@ -181,14 +181,29 @@ CREATE TABLE tasks (
     task_type VARCHAR(20) CHECK (task_type IN ('follow_up', 'showing', 'document', 'administrative')),
     related_entity_type VARCHAR(20) CHECK (related_entity_type IN ('property', 'client', 'inquiry', 'showing')),
     related_entity_id UUID,
+    template_id UUID,
     completed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Task Templates table
+CREATE TABLE task_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    workflow_type VARCHAR(50) NOT NULL CHECK (workflow_type IN ('new_client_onboarding', 'property_listing', 'buyer_process', 'seller_process', 'closing_process', 'follow_up_sequence')),
+    tasks JSONB NOT NULL, -- Array of task objects with title, description, due_days_offset, priority, task_type
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES agents(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Add foreign key constraints
 ALTER TABLE properties ADD CONSTRAINT fk_properties_agent FOREIGN KEY (assigned_agent_id) REFERENCES agents(id);
 ALTER TABLE properties ADD CONSTRAINT fk_properties_creator FOREIGN KEY (created_by) REFERENCES agents(id);
 ALTER TABLE documents ADD CONSTRAINT fk_documents_creator FOREIGN KEY (created_by) REFERENCES agents(id);
+ALTER TABLE tasks ADD CONSTRAINT fk_tasks_template FOREIGN KEY (template_id) REFERENCES task_templates(id);
 
 -- Create indexes for better performance
 CREATE INDEX idx_properties_status ON properties(listing_status);
@@ -212,6 +227,7 @@ ALTER TABLE showings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE communications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_templates ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
 -- Properties: Agents can only see their assigned properties
@@ -241,6 +257,20 @@ CREATE POLICY "Agents can view their assigned inquiries" ON inquiries
 -- Showings: Agents can view their showings
 CREATE POLICY "Agents can view their showings" ON showings
     FOR SELECT USING (agent_id = auth.uid());
+
+-- Tasks: Agents can view their assigned tasks
+CREATE POLICY "Agents can view their assigned tasks" ON tasks
+    FOR SELECT USING (assigned_to = auth.uid());
+
+-- Task Templates: Agents can view and manage templates
+CREATE POLICY "Agents can view task templates" ON task_templates
+    FOR SELECT USING (true);
+
+CREATE POLICY "Agents can create task templates" ON task_templates
+    FOR INSERT WITH CHECK (created_by = auth.uid());
+
+CREATE POLICY "Agents can update their task templates" ON task_templates
+    FOR UPDATE USING (created_by = auth.uid());
 
 -- Create function to handle new user registration
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -288,4 +318,7 @@ CREATE TRIGGER update_showings_updated_at BEFORE UPDATE ON showings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON documents
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_task_templates_updated_at BEFORE UPDATE ON task_templates
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

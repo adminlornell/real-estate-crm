@@ -39,3 +39,247 @@ CREATE TRIGGER on_auth_user_created
 -- FROM auth.users 
 -- WHERE id = 'your-user-id'
 -- AND NOT EXISTS (SELECT 1 FROM agents WHERE user_id = auth.users.id); 
+
+-- Migration: Fix Property Creation RLS Policy
+-- The issue is that created_by stores agent.id but RLS checks auth.uid()
+-- We need to update the policy to check if the user owns the agent record
+
+-- Drop the existing incorrect policy
+DROP POLICY IF EXISTS "Agents can create properties" ON properties;
+
+-- Create the correct policy that checks if the user owns the agent record
+CREATE POLICY "Agents can create properties" ON properties
+    FOR INSERT WITH CHECK (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Also fix the update policy to be consistent
+DROP POLICY IF EXISTS "Agents can update their assigned properties" ON properties;
+
+CREATE POLICY "Agents can update their assigned properties" ON properties
+    FOR UPDATE USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Fix the delete policy to be consistent
+DROP POLICY IF EXISTS "Agents can delete their assigned properties" ON properties;
+
+CREATE POLICY "Agents can delete their assigned properties" ON properties
+    FOR DELETE USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Also fix the existing select policy to be consistent
+DROP POLICY IF EXISTS "Agents can view their assigned properties" ON properties;
+
+CREATE POLICY "Agents can view their assigned properties" ON properties
+    FOR SELECT USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Fix similar issues in other tables
+-- Clients table
+DROP POLICY IF EXISTS "Agents can create clients" ON clients;
+CREATE POLICY "Agents can create clients" ON clients
+    FOR INSERT WITH CHECK (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can update their assigned clients" ON clients;
+CREATE POLICY "Agents can update their assigned clients" ON clients
+    FOR UPDATE USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can delete their assigned clients" ON clients;
+CREATE POLICY "Agents can delete their assigned clients" ON clients
+    FOR DELETE USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can view their assigned clients" ON clients;
+CREATE POLICY "Agents can view their assigned clients" ON clients
+    FOR SELECT USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Inquiries table
+DROP POLICY IF EXISTS "Agents can create inquiries" ON inquiries;
+CREATE POLICY "Agents can create inquiries" ON inquiries
+    FOR INSERT WITH CHECK (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can update their assigned inquiries" ON inquiries;
+CREATE POLICY "Agents can update their assigned inquiries" ON inquiries
+    FOR UPDATE USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can delete their assigned inquiries" ON inquiries;
+CREATE POLICY "Agents can delete their assigned inquiries" ON inquiries
+    FOR DELETE USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can view their assigned inquiries" ON inquiries;
+CREATE POLICY "Agents can view their assigned inquiries" ON inquiries
+    FOR SELECT USING (
+        assigned_agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Showings table
+DROP POLICY IF EXISTS "Agents can create showings" ON showings;
+CREATE POLICY "Agents can create showings" ON showings
+    FOR INSERT WITH CHECK (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can update their showings" ON showings;
+CREATE POLICY "Agents can update their showings" ON showings
+    FOR UPDATE USING (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can delete their showings" ON showings;
+CREATE POLICY "Agents can delete their showings" ON showings
+    FOR DELETE USING (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can view their showings" ON showings;
+CREATE POLICY "Agents can view their showings" ON showings
+    FOR SELECT USING (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Tasks table
+DROP POLICY IF EXISTS "Agents can create tasks" ON tasks;
+CREATE POLICY "Agents can create tasks" ON tasks
+    FOR INSERT WITH CHECK (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can update their assigned tasks" ON tasks;
+CREATE POLICY "Agents can update their assigned tasks" ON tasks
+    FOR UPDATE USING (
+        assigned_to IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can delete their created tasks" ON tasks;
+CREATE POLICY "Agents can delete their created tasks" ON tasks
+    FOR DELETE USING (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can view their assigned tasks" ON tasks;
+CREATE POLICY "Agents can view their assigned tasks" ON tasks
+    FOR SELECT USING (
+        assigned_to IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Communications table
+DROP POLICY IF EXISTS "Agents can create communications" ON communications;
+CREATE POLICY "Agents can create communications" ON communications
+    FOR INSERT WITH CHECK (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can update their communications" ON communications;
+CREATE POLICY "Agents can update their communications" ON communications
+    FOR UPDATE USING (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can delete their communications" ON communications;
+CREATE POLICY "Agents can delete their communications" ON communications
+    FOR DELETE USING (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can view their communications" ON communications;
+CREATE POLICY "Agents can view their communications" ON communications
+    FOR SELECT USING (
+        agent_id IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+-- Documents table
+DROP POLICY IF EXISTS "Agents can create documents" ON documents;
+CREATE POLICY "Agents can create documents" ON documents
+    FOR INSERT WITH CHECK (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can update their documents" ON documents;
+CREATE POLICY "Agents can update their documents" ON documents
+    FOR UPDATE USING (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can delete their documents" ON documents;
+CREATE POLICY "Agents can delete their documents" ON documents
+    FOR DELETE USING (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Agents can view their documents" ON documents;
+CREATE POLICY "Agents can view their documents" ON documents
+    FOR SELECT USING (
+        created_by IN (
+            SELECT id FROM agents WHERE user_id = auth.uid()
+        )
+    ); 

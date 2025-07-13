@@ -1,32 +1,39 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
-import { ArrowLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
+import { useNavigation } from '@/hooks/useNavigation'
 
 interface BackNavigationProps {
-  backPath: string
-  backLabel: string
-  children?: React.ReactNode
+  fallbackPath?: string
+  fallbackText?: string
+  className?: string
 }
 
-export default function BackNavigation({ backPath, backLabel, children }: BackNavigationProps) {
-  const router = useRouter()
+export default function BackNavigation({ 
+  fallbackPath = '/dashboard', 
+  fallbackText = 'Dashboard',
+  className = "inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+}: BackNavigationProps) {
+  const { goBack, getBackButtonText, canGoBack } = useNavigation()
+
+  const handleBackClick = () => {
+    if (canGoBack()) {
+      goBack()
+    } else {
+      // Fallback navigation
+      window.location.href = fallbackPath
+    }
+  }
+
+  const displayText = canGoBack() ? getBackButtonText() : fallbackText
 
   return (
-    <div className="bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between w-full">
-          <Button
-            variant="ghost"
-            onClick={() => router.push(backPath)}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {backLabel}
-          </Button>
-          {children}
-        </div>
-      </div>
-    </div>
+    <button
+      onClick={handleBackClick}
+      className={className}
+    >
+      <ChevronLeft className="w-4 h-4 mr-1" />
+      Back to {displayText}
+    </button>
   )
 } 

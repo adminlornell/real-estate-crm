@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react'
+'use client'
 
-/**
- * Custom hook to prevent hydration mismatches
- * Returns true only after the component has mounted on the client
- */
+import { useState, useEffect, ReactNode } from 'react'
+
 export function useHydration() {
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -14,25 +12,15 @@ export function useHydration() {
   return isHydrated
 }
 
-/**
- * Component wrapper to prevent hydration mismatches
- * Only renders children after hydration is complete
- */
 interface HydrationGuardProps {
-  children: React.ReactNode
-  fallback?: React.ReactNode
+  children: ReactNode
+  fallback?: ReactNode
 }
 
 export function HydrationGuard({ children, fallback }: HydrationGuardProps) {
   const isHydrated = useHydration()
-  
-  if (!isHydrated) {
-    return fallback || (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-  
+
+  // Always render children to avoid hydration mismatches
+  // The isHydrated check can be used by children components if needed
   return <>{children}</>
 } 

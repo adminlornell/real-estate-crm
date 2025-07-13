@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -15,7 +13,7 @@
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
     --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 35%; /* Darker for better contrast */
     --accent: 210 40% 96%;
     --accent-foreground: 222.2 84% 4.9%;
     --destructive: 0 84.2% 60.2%;
@@ -38,7 +36,7 @@
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 215 20.2% 75%; /* Lighter for dark mode contrast */
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
@@ -51,15 +49,61 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  /* Use CSS variables for better theming support */
+  h1, h2, h3, h4, h5, h6 {
+    color: hsl(var(--foreground));
+    font-weight: 700;
+  }
+  
+  p {
+    color: hsl(var(--foreground));
+  }
+  
+  /* Ensure form labels are visible */
+  label {
+    color: hsl(var(--foreground));
+    font-weight: 500;
+  }
+  
+  /* Improve placeholder text */
+  ::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+  
+  /* Better link contrast using CSS variables */
+  a {
+    color: hsl(var(--primary));
+  }
+  
+  a:hover {
+    color: hsl(var(--primary));
+    opacity: 0.8;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* High contrast utility classes */
+  .text-high-contrast {
+    color: #111827;
+  }
+  
+  .text-medium-contrast {
+    color: #374151;
+  }
+  
+  .text-low-contrast {
+    color: #4b5563;
   }
 }

@@ -4,12 +4,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import PropertyList from '@/components/properties/PropertyList'
-import { HydrationGuard } from '@/hooks/useHydration'
+import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
 
 export default function PropertiesPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const isHydrated = useHydration()
 
   useEffect(() => {
     if (!loading && !user) {
@@ -17,20 +18,30 @@ export default function PropertiesPage() {
     }
   }, [user, loading, router])
 
+  // Show loading state until hydrated and auth is resolved
+  if (!isHydrated || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  // If not authenticated after hydration, show loading while redirecting
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   return (
-    <HydrationGuard>
-      {loading || !user ? (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
-        <div className="min-h-screen bg-gray-50">
-          <MainNavigation title="Properties" />
-          <main>
-            <PropertyList />
-          </main>
-        </div>
-      )}
-    </HydrationGuard>
+    <div className="min-h-screen bg-gray-50">
+      <MainNavigation title="Properties" />
+      <main>
+        <PropertyList />
+      </main>
+    </div>
   )
 }

@@ -60,11 +60,11 @@ export default function SignUpForm() {
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
+    <div className="max-w-md mx-auto bg-card rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-bold text-center mb-6 text-card-foreground">Create Account</h2>
       
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
@@ -77,7 +77,7 @@ export default function SignUpForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="agentName" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="agentName" className="block text-sm font-medium text-foreground">
             Full Name
           </label>
           <input
@@ -86,12 +86,12 @@ export default function SignUpForm() {
             value={agentName}
             onChange={(e) => setAgentName(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 border border-input rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring bg-background text-foreground"
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground">
             Email
           </label>
           <input
@@ -100,7 +100,7 @@ export default function SignUpForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 border border-input rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring bg-background text-foreground"
           />
         </div>
 

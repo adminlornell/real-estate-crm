@@ -106,13 +106,29 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
     set({ loading: true, error: null })
     
     try {
+      console.log('PropertyStore: Creating property with data:', property)
+      
+      // Debug: Check current session
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('PropertyStore: Current session:', session?.user?.id)
+      
       const { data, error } = await supabase
         .from('properties')
         .insert(property)
         .select()
         .single()
 
-      if (error) throw error
+      console.log('PropertyStore: Insert result:', { data, error })
+
+      if (error) {
+        console.error('PropertyStore: Insert error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
+        throw error
+      }
 
       set(state => ({
         properties: [data, ...state.properties],
@@ -121,6 +137,7 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
 
       return data
     } catch (error) {
+      console.error('PropertyStore: Create property error:', error)
       set({ 
         error: error instanceof Error ? error.message : 'Failed to create property',
         loading: false 

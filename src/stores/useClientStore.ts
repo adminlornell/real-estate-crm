@@ -39,6 +39,7 @@ export const useClientStore = create<ClientStore>((set, get) => ({
   },
 
   fetchClients: async (agentId?: string) => {
+    console.log('ClientStore: fetchClients called with agentId:', agentId)
     set({ loading: true, error: null })
     
     try {
@@ -48,6 +49,7 @@ export const useClientStore = create<ClientStore>((set, get) => ({
         .order('created_at', { ascending: false })
 
       if (agentId) {
+        console.log('ClientStore: Filtering by agent ID:', agentId)
         query = query.eq('assigned_agent_id', agentId)
       }
 
@@ -66,11 +68,15 @@ export const useClientStore = create<ClientStore>((set, get) => ({
       }
 
       const { data, error } = await query
+      
+      console.log('ClientStore: Query result - data:', data, 'error:', error)
 
       if (error) throw error
 
+      console.log('ClientStore: Setting clients:', data?.length || 0, 'clients')
       set({ clients: data || [], loading: false })
     } catch (error) {
+      console.error('ClientStore: Error fetching clients:', error)
       set({ 
         error: error instanceof Error ? error.message : 'Failed to fetch clients',
         loading: false 

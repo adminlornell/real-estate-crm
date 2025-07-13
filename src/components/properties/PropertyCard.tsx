@@ -5,17 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { formatCurrency } from '@/lib/utils'
 import { Database } from '@/types/database'
-import { MapPin, Bed, Bath, Square, Calendar } from 'lucide-react'
+import { MapPin, Bed, Bath, Square, Calendar, Eye } from 'lucide-react'
 
 type Property = Database['public']['Tables']['properties']['Row']
 
 interface PropertyCardProps {
   property: Property
+  onView?: (id: string) => void
   onEdit?: (property: Property) => void
   onDelete?: (id: string) => void
 }
 
-export default function PropertyCard({ property, onEdit, onDelete }: PropertyCardProps) {
+export default function PropertyCard({ property, onView, onEdit, onDelete }: PropertyCardProps) {
   const photos = property.photos as string[] || []
 
   return (
@@ -83,10 +84,21 @@ export default function PropertyCard({ property, onEdit, onDelete }: PropertyCar
         <div className="flex justify-between items-center">
           <div className="flex items-center text-xs text-gray-500">
             <Calendar className="w-3 h-3 mr-1" />
-            Listed: {new Date(property.created_at).toLocaleDateString()}
+            Listed: {property.created_at ? new Date(property.created_at).toLocaleDateString() : 'N/A'}
           </div>
           
           <div className="flex space-x-2">
+            {onView && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onView(property.id)}
+                className="flex items-center"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                View
+              </Button>
+            )}
             {onEdit && (
               <Button
                 variant="outline"

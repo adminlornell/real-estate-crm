@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
-import { Plus, Search, Filter, Phone, Mail, MessageSquare, User, Building, Heart, DollarSign, Edit } from 'lucide-react'
+import { Plus, Search, Phone, Mail, User, Building, Heart, DollarSign, Edit } from 'lucide-react'
 import ClientForm from '@/components/clients/ClientForm'
-import { HydrationGuard } from '@/hooks/useHydration'
+import QuickActionsCompact from '@/components/clients/QuickActionsCompact'
+import LeadScoringSystem from '@/components/clients/LeadScoringSystem'
+import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
 
 type Client = Database['public']['Tables']['clients']['Row']
@@ -18,6 +20,7 @@ type Client = Database['public']['Tables']['clients']['Row']
 export default function ClientsPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const isHydrated = useHydration()
   const [clients, setClients] = useState<Client[]>([])
   const [filteredClients, setFilteredClients] = useState<Client[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -27,6 +30,7 @@ export default function ClientsPage() {
   const [showClientForm, setShowClientForm] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [agentId, setAgentId] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<'list' | 'scoring'>('list')
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,7 +56,7 @@ export default function ClientsPage() {
       const { data: agent } = await supabase
         .from('agents')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .single()
 
       if (!agent) return
@@ -149,27 +153,67 @@ export default function ClientsPage() {
     }
   }
 
-  return (
-    <HydrationGuard>
-      {loading || !user ? (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
-          <div className="min-h-screen bg-gray-50">
-        <MainNavigation title="Clients" />
+  // Show loading state until hydrated and auth is resolved
+  if (!isHydrated || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Add Client Button */}
-          <div className="mb-6 flex justify-end">
-            <Button 
-              onClick={handleAddClient}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Client
-            </Button>
+  // If not authenticated after hydration, show loading while redirecting
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <MainNavigation title="Clients" />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Tabs */}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('list')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'list'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Client List
+              </button>
+              <button
+                onClick={() => setActiveTab('scoring')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'scoring'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Lead Scoring
+              </button>
+            </nav>
           </div>
+
+          {activeTab === 'list' ? (
+            <>
+              {/* Add Client Button */}
+              <div className="mb-6 flex justify-end">
+                <Button 
+                  onClick={handleAddClient}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Client
+                </Button>
+              </div>
         {/* Search and Filters */}
         <div className="mb-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -186,7 +230,7 @@ export default function ClientsPage() {
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
               >
                 <option value="all">All Types</option>
                 <option value="buyer">Buyer</option>
@@ -197,7 +241,7 @@ export default function ClientsPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -237,7 +281,7 @@ export default function ClientsPage() {
         {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
+              <Card key={`client-loading-skeleton-${i}`} className="animate-pulse">
                 <CardContent className="p-6">
                   <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                   <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
@@ -289,26 +333,19 @@ export default function ClientsPage() {
                     </div>
                     {client.budget_range && typeof client.budget_range === 'object' && (
                       <div className="text-sm text-gray-600">
-                        Budget: ${(client.budget_range as any).min?.toLocaleString()} - ${(client.budget_range as any).max?.toLocaleString()}
+                        Budget: ${(client.budget_range as { min?: number; max?: number }).min?.toLocaleString()} - ${(client.budget_range as { min?: number; max?: number }).max?.toLocaleString()}
                       </div>
                     )}
                   </div>
                   
                   <div className="mt-4 space-y-2">
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <Phone className="w-4 h-4 mr-1" />
-                        Call
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <Mail className="w-4 h-4 mr-1" />
-                        Email
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        Text
-                      </Button>
-                    </div>
+                    <QuickActionsCompact
+                      clientId={client.id}
+                      agentId={agentId}
+                      clientName={`${client.first_name} ${client.last_name}`}
+                      clientEmail={client.email || undefined}
+                      clientPhone={client.phone || undefined}
+                    />
                     <div className="flex space-x-2">
                       <Button 
                         size="sm" 
@@ -355,19 +392,21 @@ export default function ClientsPage() {
             </Button>
           </div>
         )}
-      </main>
+            </>
+          ) : (
+            <LeadScoringSystem />
+          )}
+        </main>
 
-      {/* Client Form Modal */}
-      {showClientForm && (
-        <ClientForm
-          client={editingClient}
-          onSave={handleSaveClient}
-          onCancel={handleCancelForm}
-          agentId={agentId}
-        />
-      )}
-    </div>
-      )}
-    </HydrationGuard>
+        {/* Client Form Modal */}
+        {showClientForm && (
+          <ClientForm
+            client={editingClient}
+            onSave={handleSaveClient}
+            onCancel={handleCancelForm}
+            agentId={agentId}
+          />
+        )}
+      </div>
   )
 } 

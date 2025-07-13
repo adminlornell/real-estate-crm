@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePropertyStore } from '@/stores/usePropertyStore'
 import { useAuth } from '@/contexts/AuthContext'
 import PropertyCard from './PropertyCard'
@@ -16,6 +17,7 @@ type Property = Database['public']['Tables']['properties']['Row']
 
 export default function PropertyList() {
   const { user } = useAuth()
+  const router = useRouter()
   const {
     properties,
     loading,
@@ -29,6 +31,7 @@ export default function PropertyList() {
   
   const [agentId, setAgentId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -59,6 +62,10 @@ export default function PropertyList() {
     setFilters({ [key]: value })
   }
 
+  const handleView = (id: string) => {
+    router.push(`/properties/${id}`)
+  }
+
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       await deleteProperty(id)
@@ -66,14 +73,21 @@ export default function PropertyList() {
   }
 
   const handleEdit = (property: Property) => {
-    // TODO: Implement edit functionality
-    console.log('Edit property:', property)
+    setEditingProperty(property)
+    setShowForm(true)
   }
 
   const handleSuccess = () => {
     if (agentId) {
       fetchProperties(agentId)
     }
+    setShowForm(false)
+    setEditingProperty(null)
+  }
+
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setEditingProperty(null)
   }
 
   if (loading && properties.length === 0) {
@@ -81,7 +95,7 @@ export default function PropertyList() {
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
+            <div key={`property-list-skeleton-${i}`} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -137,13 +151,13 @@ export default function PropertyList() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 mb-1">
                 Status
               </label>
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 font-medium"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -154,13 +168,13 @@ export default function PropertyList() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 mb-1">
                 Property Type
               </label>
               <select
                 value={filters.propertyType}
                 onChange={(e) => handleFilterChange('propertyType', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 font-medium"
               >
                 <option value="all">All Types</option>
                 <option value="single_family">Single Family</option>
@@ -171,7 +185,7 @@ export default function PropertyList() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 mb-1">
                 City
               </label>
               <Input
@@ -182,7 +196,7 @@ export default function PropertyList() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 mb-1">
                 Price Range
               </label>
               <div className="flex space-x-2">
@@ -202,13 +216,13 @@ export default function PropertyList() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-900 mb-1">
                 Bedrooms
               </label>
               <select
                 value={filters.bedrooms || 'all'}
                 onChange={(e) => handleFilterChange('bedrooms', e.target.value === 'all' ? null : Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 font-medium"
               >
                 <option value="all">Any</option>
                 <option value="1">1+</option>
@@ -259,6 +273,7 @@ export default function PropertyList() {
             <PropertyCard
               key={property.id}
               property={property}
+              onView={handleView}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
@@ -281,8 +296,9 @@ export default function PropertyList() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <PropertyForm
-              onClose={() => setShowForm(false)}
+              onClose={handleCloseForm}
               onSuccess={handleSuccess}
+              initialData={editingProperty}
             />
           </div>
         </div>

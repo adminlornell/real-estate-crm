@@ -394,9 +394,9 @@ export default function ClientForm({ client, onSave, onCancel, agentId }: Client
                   Tags
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {formData.tags.map((tag) => (
+                  {formData.tags.map((tag, index) => (
                     <span
-                      key={tag}
+                      key={`form-tag-${index}-${tag}`}
                       className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm flex items-center"
                     >
                       {tag}
