@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `npm run dev` - Start development server on localhost:3000
-- `npm run build` - Build for production
+- `npm run dev` - Start development server on localhost:3000 with hot reload
+- `npm run build` - Build for production with webpack optimization
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint for code quality checks
 
@@ -13,6 +13,7 @@ ESLint configuration includes Next.js TypeScript rules with warnings for:
 - Unused variables, explicit any, unescaped entities
 - React hooks dependencies and img elements
 - Prefer const declarations
+- Custom rules for React 19 and Next.js 15 compatibility
 
 ## Environment Setup
 
@@ -28,9 +29,11 @@ Required environment variables:
 
 ## Project Configuration
 
-- **TypeScript**: Strict mode enabled with Next.js plugin
-- **Tailwind CSS**: Custom design system with CSS variables for theming
-- **Next.js 15**: App router with optimized package imports for Supabase, Lucide, React Hook Form
+- **TypeScript**: Strict mode enabled with Next.js plugin and generated Supabase types
+- **Tailwind CSS v4**: Custom design system with CSS variables for theming and HSL color values
+- **Next.js 15**: App router with React 19, optimized package imports, webpack bundle splitting
+- **Package Optimization**: Optimized imports for Supabase, Lucide, React Hook Form
+- **Bundle Splitting**: Vendor chunking and lazy loading for performance
 
 ## Architecture Overview
 
@@ -42,19 +45,23 @@ This is a Next.js 15 real estate CRM with the following key architectural patter
 - Auth context (`src/contexts/AuthContext.tsx`) manages user state
 - Auth service (`src/lib/auth.ts`) handles authentication operations with caching
 
-### Database Schema
-Core tables with relationships:
-- `agents` - Agent profiles linked to auth users via `user_id`
-- `properties` - Property listings assigned to agents
-- `clients` - Client records assigned to agents
-- `inquiries` - Lead capture and tracking
-- `showings` - Property showing scheduling
-- `tasks` - Task management with comments support via `task_comments` table
-- `communications` - Client interaction tracking
-- `activity_logs` - Audit trail for all activities
-- `task_templates` - Workflow templates for task automation
-- `documents` - Document records with template references and field values
-- `document_templates` - Reusable document templates with configurable fields
+### Database Schema (15+ Tables)
+Core tables with comprehensive relationships:
+- `agents` - Agent profiles linked to auth users via `user_id` with automatic creation
+- `properties` - Property listings with JSONB metadata, photos, virtual tours
+- `clients` - Client records with preferences, budget tracking, lead scoring
+- `inquiries` - Lead capture with source tracking and conversion analytics
+- `showings` - Property showing scheduling with feedback and outcome tracking
+- `communications` - Client interaction timeline with multiple communication types
+- `tasks` - Task management with priority levels, due dates, and template support
+- `task_comments` - Task collaboration system with activity integration
+- `activity_logs` - Comprehensive audit trail with automatic trigger-based logging
+- `task_templates` - Pre-defined workflow templates for process automation
+- `documents` - Generated documents with field values, status tracking, and signatures
+- `document_templates` - Reusable templates with configurable field definitions
+- `document_signatures` - Enhanced signature records with metadata and verification
+- `signature_requests` - Multi-party signing workflow management
+- `signature_audit_log` - Complete signature audit trail with timestamps and device info
 
 All tables use RLS policies to ensure agents only access their assigned data.
 

@@ -37,8 +37,33 @@ export const authService = {
   },
 
   async getCurrentUser() {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    return { user, error }
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      return { user, error }
+    } catch (error) {
+      console.error('Error getting current user:', error)
+      return { user: null, error }
+    }
+  },
+
+  async getSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      return { session, error }
+    } catch (error) {
+      console.error('Error getting session:', error)
+      return { session: null, error }
+    }
+  },
+
+  async refreshSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.refreshSession()
+      return { session, error }
+    } catch (error) {
+      console.error('Error refreshing session:', error)
+      return { session: null, error }
+    }
   },
 
   async resetPassword(email: string) {

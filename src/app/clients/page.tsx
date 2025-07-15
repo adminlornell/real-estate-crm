@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { Plus, Search, Phone, Mail, User, Building, Heart, DollarSign, Edit } from 'lucide-react'
 import ClientForm from '@/components/clients/ClientForm'
-import QuickActionsCompact from '@/components/clients/QuickActionsCompact'
+import QuickActions from '@/components/clients/QuickActions'
 import LeadScoringSystem from '@/components/clients/LeadScoringSystem'
 import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
@@ -339,12 +339,13 @@ export default function ClientsPage() {
                   </div>
                   
                   <div className="mt-4 space-y-2">
-                    <QuickActionsCompact
+                    <QuickActions
                       clientId={client.id}
                       agentId={agentId}
                       clientName={`${client.first_name} ${client.last_name}`}
                       clientEmail={client.email || undefined}
                       clientPhone={client.phone || undefined}
+                      variant="compact"
                     />
                     <div className="flex space-x-2">
                       <Button 

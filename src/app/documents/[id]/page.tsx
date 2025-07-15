@@ -12,7 +12,6 @@ import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import PrintPreview from '@/components/documents/PrintPreview';
 import DocumentSigning from '@/components/documents/DocumentSigning';
-import { makeAuthenticatedRequest } from '@/lib/api';
 import { saveSignedDocument } from '@/lib/signedDocuments';
 
 interface DocumentWithTemplate {

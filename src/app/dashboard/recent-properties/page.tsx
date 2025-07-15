@@ -54,7 +54,7 @@ export default function RecentPropertiesPage() {
       const { data: agent } = await supabase
         .from('agents')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('user_id', user?.id || '')
         .single()
 
       if (!agent) return

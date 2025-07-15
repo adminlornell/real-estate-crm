@@ -30,7 +30,7 @@ export default function DocumentPrintPreviewPage() {
   const [document, setDocument] = useState<DocumentWithTemplate | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { generatePDF } = useDocumentStore();
+  // const { generatePDF } = useDocumentStore(); // Commented out as this method doesn't exist
 
   useEffect(() => {
     if (params.id) {
@@ -92,10 +92,26 @@ export default function DocumentPrintPreviewPage() {
   const handleGeneratePDF = async () => {
     if (!document) return;
     
-    const pdfUrl = await generatePDF(document.id);
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-      await fetchDocument(document.id);
+    try {
+      // Call PDF generation API endpoint
+      const response = await fetch(`/api/documents/generate-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ documentId: document.id }),
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        await fetchDocument(document.id);
+      } else {
+        console.error('Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
     }
   };
 
@@ -134,9 +150,9 @@ export default function DocumentPrintPreviewPage() {
     <PrintPreview
       isOpen={true}
       onClose={handleClose}
-      document={{
+      documentData={{
         id: document.id,
-        title: document.title || document.document_name,
+        title: document.title || document.document_name || 'Untitled Document',
         content: generateContent(),
         document_templates: document.document_templates,
         field_values: document.field_values

@@ -1,6 +1,7 @@
 {
   "name": "real-estate-crm",
   "version": "0.1.0",
+  "description": "Enterprise-grade real estate CRM with advanced document management, multi-party signatures, and world-class print preview",
   "private": true,
   "scripts": {
     "dev": "next dev",

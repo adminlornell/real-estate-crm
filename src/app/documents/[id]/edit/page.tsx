@@ -37,7 +37,7 @@ export default function EditDocumentPage() {
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({});
   const [previewMode, setPreviewMode] = useState(false);
 
-  const { updateDocument, finalizeDocument } = useDocumentStore();
+  const { updateDocument } = useDocumentStore();
 
   useEffect(() => {
     if (params.id) {
@@ -58,8 +58,8 @@ export default function EditDocumentPage() {
 
       if (error) throw error;
 
-      setDocument(data);
-      setFieldValues(data.field_values || {});
+      setDocument(data as DocumentWithTemplate);
+      setFieldValues((data.field_values as Record<string, any>) || {});
     } catch (error) {
       console.error('Error fetching document:', error);
     } finally {
@@ -99,11 +99,8 @@ export default function EditDocumentPage() {
       // Save current changes first
       await handleSave();
       
-      // Then finalize
-      const success = await finalizeDocument(document.id);
-      if (success) {
-        router.push(`/documents/${document.id}`);
-      }
+      // Navigate back to document view
+      router.push(`/documents/${document.id}`);
     }
   };
 

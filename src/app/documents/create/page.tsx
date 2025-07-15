@@ -16,7 +16,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { makeAuthenticatedRequest } from '@/lib/api';
 import DocumentSigning from '@/components/documents/DocumentSigning';
 import { saveSignedDocument } from '@/lib/signedDocuments';
 

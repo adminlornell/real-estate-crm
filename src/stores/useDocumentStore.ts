@@ -98,7 +98,6 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         throw error;
       }
 
-      console.log('Successfully fetched templates:', data?.length || 0);
       set({ 
         documentTemplates: data || [], 
         templates: data || [], 
@@ -124,7 +123,6 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
   createDocument: async (documentData: Partial<Document>) => {
     try {
-      console.log('Creating document with data:', documentData);
       
       const { data, error } = await supabase
         .from('documents')
@@ -147,7 +145,6 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         documents: [data, ...state.documents]
       }));
 
-      console.log('Document created successfully:', data);
       return data;
     } catch (error) {
       console.error('Error creating document:', error);

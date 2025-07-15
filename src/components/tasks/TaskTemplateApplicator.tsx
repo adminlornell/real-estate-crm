@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import Spinner from '@/components/ui/Spinner'
 import { supabase } from '@/lib/supabase'
 import { ActivityLogger } from '@/lib/activityLogger'
 import { 
@@ -36,7 +36,7 @@ interface TaskTemplateApplicatorProps {
   onTasksCreated?: () => void
 }
 
-const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({ 
+function TaskTemplateApplicator({ 
   agentId, 
   entityType, 
   entityId, 
@@ -48,39 +48,25 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
   const [applying, setApplying] = useState<string | null>(null)
   const [isCollapsed, setIsCollapsed] = useState(false)
 
-  // Component lifecycle logging (keep minimal for debugging)
-  useEffect(() => {
-    console.log('TaskTemplateApplicator mounted for:', entityName, entityType)
-    return () => {
-      console.log('TaskTemplateApplicator unmounted for:', entityName)
-    }
-  }, [entityName, entityType, entityId])
 
   useEffect(() => {
     const initializeComponent = async () => {
-      console.log('Initializing TaskTemplateApplicator for agent:', agentId)
-      
       if (!agentId) {
-        console.warn('No agentId provided, skipping initialization')
         setLoading(false)
         return
       }
       
       try {
-        // First cleanup duplicates, then fetch clean templates
-        console.log('Starting cleanup duplicates...')
         await cleanupDuplicateTemplates()
-        console.log('Cleanup completed, fetching templates...')
         await fetchTemplates()
-        console.log('Initialization completed successfully')
       } catch (error) {
         console.error('Error initializing TaskTemplateApplicator:', error)
         // Still try to fetch templates even if cleanup fails
-        console.log('Attempting to fetch templates despite initialization error...')
         try {
           await fetchTemplates()
         } catch (fetchError) {
           console.error('Failed to fetch templates as fallback:', fetchError)
+          setLoading(false)
         }
       }
     }
@@ -212,24 +198,6 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
     }
   }
 
-  const checkTaskDependencies = async (templateId: string): Promise<number> => {
-    try {
-      const { data: dependentTasks, error } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('template_id', templateId)
-
-      if (error) {
-        console.error('Error checking task dependencies:', error)
-        return 0
-      }
-
-      return dependentTasks?.length || 0
-    } catch (error) {
-      console.error('Error checking task dependencies:', error)
-      return 0
-    }
-  }
 
   const fetchTemplates = async () => {
     try {
@@ -277,9 +245,12 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
       setApplying(template.id)
       
       // Get the current authenticated user for verification
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`)
+      }
       if (!session?.user?.id) {
-        throw new Error('User not authenticated')
+        throw new Error('User not authenticated. Please sign in again.')
       }
       
       // Safely parse the tasks JSON
@@ -538,7 +509,7 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
                         >
                           {applying === template.id ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              <Spinner size="sm" color="white" className="mr-2" />
                               Applying...
                             </>
                           ) : (
@@ -601,6 +572,6 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
       )}
     </div>
   )
-}) 
+}
 
 export default TaskTemplateApplicator 

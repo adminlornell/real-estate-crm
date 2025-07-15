@@ -79,11 +79,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initAuth = async () => {
       try {
-        // Get initial user
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        // First check if there's an existing session
+        const { data: { session }, error } = await supabase.auth.getSession()
         
+        if (error) {
+          console.error('Error getting session:', error)
+          if (mounted) {
+            setLoading(false)
+          }
+          return
+        }
+
         if (mounted) {
-          setUser(currentUser as AuthUser)
+          const currentUser = session?.user as AuthUser || null
+          setUser(currentUser)
           
           // Fetch agent data if user exists
           if (currentUser) {
@@ -106,20 +115,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('AuthContext: Timeout reached, setting loading to false')
         setLoading(false)
       }
-    }, 5000) // 5 second timeout
+    }, 10000) // 10 second timeout
 
     initAuth()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session?.user?.id)
+      
       if (mounted) {
         const currentUser = session?.user as AuthUser || null
         setUser(currentUser)
         
-        if (currentUser) {
+        if (event === 'SIGNED_IN' && currentUser) {
           await fetchAgentData(currentUser.id)
-        } else {
-          setAgent(null)
+        } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          if (currentUser) {
+            // User is still authenticated after token refresh
+            await fetchAgentData(currentUser.id)
+          } else {
+            // User is signed out
+            setAgent(null)
+          }
         }
         
         setLoading(false)
