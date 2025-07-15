@@ -1,0 +1,64 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem"
+      ],
+      "env": {
+        "FILESYSTEM_ALLOWED_DIRECTORIES": "/Users/flyn/New CRM Clone/real-estate-crm"
+      }
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-git"
+      ],
+      "env": {
+        "GIT_REPOSITORY_PATH": "/Users/flyn/New CRM Clone/real-estate-crm"
+      }
+    },
+    "typescript": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-typescript"
+      ],
+      "env": {
+        "TS_CONFIG_PATH": "/Users/flyn/New CRM Clone/real-estate-crm/tsconfig.json"
+      }
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-postgres"
+      ],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://postgres:[password]@db.hcpdfhwkvjzeqipyqebb.supabase.co:5432/postgres"
+      }
+    },
+    "pdf": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-pdf"
+      ],
+      "env": {
+        "PDF_WORKSPACE": "/Users/flyn/New CRM Clone/real-estate-crm/public"
+      }
+    },
+    "search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-search"
+      ],
+      "env": {
+        "SEARCH_INDEX_PATH": "/Users/flyn/New CRM Clone/real-estate-crm/.search-index"
+      }
+    }
+  }
+}

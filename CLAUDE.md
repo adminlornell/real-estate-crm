@@ -35,6 +35,65 @@ Required environment variables:
 - **Package Optimization**: Optimized imports for Supabase, Lucide, React Hook Form
 - **Bundle Splitting**: Vendor chunking and lazy loading for performance
 
+## MCP (Model Context Protocol) Setup
+
+This project is configured with multiple MCP servers to enhance Claude Code's capabilities:
+
+### Configured MCP Servers
+
+1. **Git Server** (`@modelcontextprotocol/server-git`)
+   - Provides version control operations and repository management
+   - Environment: `GIT_REPOSITORY_PATH` set to project root
+   - Usage: Enhanced git operations, commit analysis, branch management
+
+2. **File System Server** (`@modelcontextprotocol/server-filesystem`)
+   - Enables advanced file operations for document management
+   - Environment: `FILESYSTEM_ALLOWED_DIRECTORIES` restricted to project directory
+   - Usage: Document processing, file manipulation, content analysis
+
+3. **TypeScript Server** (`@modelcontextprotocol/server-typescript`)
+   - Enhanced TypeScript support and type checking
+   - Environment: `TS_CONFIG_PATH` points to project tsconfig.json
+   - Usage: Advanced code analysis, type inference, refactoring
+
+4. **PostgreSQL Server** (`@modelcontextprotocol/server-postgres`)
+   - Direct database integration with Supabase
+   - Environment: `POSTGRES_CONNECTION_STRING` configured for Supabase connection
+   - Usage: Database operations, schema analysis, query optimization
+
+5. **PDF Server** (`@modelcontextprotocol/server-pdf`)
+   - Enhanced PDF generation and manipulation for document management
+   - Environment: `PDF_WORKSPACE` set to public directory
+   - Usage: Document processing, PDF generation improvements
+
+6. **Search Server** (`@modelcontextprotocol/server-search`)
+   - Advanced search capabilities across the CRM
+   - Environment: `SEARCH_INDEX_PATH` set to project search index
+   - Usage: Content search, document indexing, data discovery
+
+### MCP Configuration File
+
+The MCP servers are configured in `.mcp.json` at the project root. This configuration:
+- Uses project scope for team sharing
+- Configures proper environment variables for each server
+- Restricts file system access to project directory for security
+
+### Managing MCP Servers
+
+- **List servers**: `claude mcp list`
+- **Get server details**: `claude mcp get <server-name>`
+- **Add new server**: `claude mcp add -s project <name> <command> [args...]`
+- **Remove server**: `claude mcp remove <server-name> -s project`
+
+### Benefits for Development
+
+- **Enhanced Database Operations**: Direct Supabase/PostgreSQL integration
+- **Advanced File Management**: Improved document processing capabilities
+- **Better Code Analysis**: TypeScript server for enhanced development
+- **Version Control Integration**: Git operations and repository insights
+- **Document Management**: PDF processing for the signature system
+- **Search Enhancement**: Improved search across documents and data
+
 ## Architecture Overview
 
 This is a Next.js 15 real estate CRM with the following key architectural patterns:
@@ -220,3 +279,10 @@ Component structure follows atomic design:
 - `formatDate()` - Localized date formatting
 - `formatPhoneNumber()` - US phone number formatting
 - Activity logging helpers for common operations
+
+## Important Instructions
+
+- Do what has been asked; nothing more, nothing less
+- NEVER create files unless they're absolutely necessary for achieving your goal
+- ALWAYS prefer editing an existing file to creating a new one
+- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User

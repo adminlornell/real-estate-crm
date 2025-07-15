@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -107,97 +113,89 @@
     color: #4b5563;
   }
   
-  /* Professional signature layout - side by side flexbox */
+  /* CLEAN SIGNATURE LAYOUT - SIDE BY SIDE */
   .signature-container {
     display: flex !important;
     justify-content: space-between !important;
     align-items: flex-start !important;
     width: 100% !important;
-    margin: 40px 0 !important;
-    padding: 0 10% !important;
-    position: relative !important;
-    min-height: 180px !important;
+    margin: 30px 0 !important;
+    padding: 0 !important;
+    gap: 40px !important;
     clear: both !important;
   }
   
-  /* Signature boxes - flex layout */
-  .signature-container .end-signature-signed,
-  .signature-container .end-signature-placeholder {
-    flex: 0 0 35% !important;
-    width: 35% !important;
+  /* SIGNATURE BOXES - 50/50 SPLIT */
+  .signature-container .end-signature-signed {
+    flex: 1 !important;
+    width: 50% !important;
     text-align: left !important;
-    border: 2px solid #000 !important;
-    padding: 15px !important;
-    background-color: #f9f9f9 !important;
-    border-radius: 8px !important;
-    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
-  /* Signature box styling */
-  .signature-container .end-signature-signed h4,
-  .signature-container .end-signature-placeholder h4 {
+  /* SIGNATURE TITLES */
+  .signature-container h4 {
     font-size: 14px !important;
-    font-weight: 600 !important;
+    font-weight: bold !important;
     margin-bottom: 15px !important;
-    color: #374151 !important;
+    color: #000 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    text-align: left !important;
+    border-bottom: 1px solid #000 !important;
+    padding-bottom: 5px !important;
   }
   
-  /* Remove signature line styling that conflicts */
-  .signature-container .end-signature-signed::before,
-  .signature-container .end-signature-placeholder::before {
-    display: none !important;
+  /* SIGNATURE LINE */
+  .signature-container .signature-line {
+    width: 100% !important;
+    height: 2px !important;
+    background-color: #000 !important;
+    margin: 20px 0 10px 0 !important;
   }
   
-  /* Signature image positioning */
-  .signature-container .end-signature-signed img {
+  /* SIGNATURE IMAGE */
+  .signature-container img {
     display: block !important;
-    margin: 0 0 10px 0 !important;
+    margin: 10px 0 !important;
     max-width: 180px !important;
     max-height: 50px !important;
     border: 1px solid #000 !important;
     padding: 5px !important;
     background: white !important;
-    position: relative !important;
-    z-index: 2 !important;
   }
   
-  /* Signature details styling */
-  .signature-container .end-signature-signed p,
-  .signature-container .end-signature-placeholder p {
+  /* SIGNER NAME */
+  .signature-container .signer-name {
     font-size: 12px !important;
+    font-weight: bold !important;
+    margin: 10px 0 5px 0 !important;
+    color: #000 !important;
+    text-transform: uppercase !important;
+  }
+  
+  /* SIGNATURE DATE */
+  .signature-container .signature-date {
+    font-size: 11px !important;
+    margin: 5px 0 0 0 !important;
+    color: #000 !important;
+  }
+  
+  /* GENERAL TEXT */
+  .signature-container p {
+    font-size: 11px !important;
     margin: 3px 0 !important;
-    color: #374151 !important;
-    line-height: 1.4 !important;
-    text-align: left !important;
+    color: #000 !important;
   }
   
-  /* Remove conflicting signature labels */
-  .signature-container .end-signature-signed .signature-label,
-  .signature-container .end-signature-placeholder .signature-label {
-    display: none !important;
-  }
-  
-  /* Responsive adjustments for smaller screens */
-  @media (max-width: 768px) {
+  /* MOBILE RESPONSIVE - ONLY FOR SCREENS, NOT PRINT */
+  @media screen and (max-width: 768px) {
     .signature-container {
       flex-direction: column !important;
-      padding: 0 5% !important;
-      min-height: 300px !important;
+      gap: 20px !important;
     }
     
-    .signature-container .end-signature-signed,
-    .signature-container .end-signature-placeholder {
-      flex: none !important;
+    .signature-container .end-signature-signed {
       width: 100% !important;
-      margin-bottom: 20px !important;
-    }
-    
-    .signature-container .end-signature-signed:last-child,
-    .signature-container .end-signature-placeholder:last-child {
-      margin-bottom: 0 !important;
     }
   }
   
@@ -270,6 +268,33 @@
   
   div[style*="maxHeight: calc(100vh - 250px)"] .logo-container {
     height: 90px !important;
+  }
+
+  /* ===== NUCLEAR LOGO CENTERING - HIGHEST SPECIFICITY ===== */
+  html body .document-content .document-header,
+  html body .document-preview-content .document-header,
+  html body .print-content .document-header,
+  html body .document-content .document-header *,
+  html body .document-preview-content .document-header *,
+  html body .print-content .document-header *,
+  html body .document-content .logo-container,
+  html body .document-preview-content .logo-container,
+  html body .print-content .logo-container,
+  .document-header[style*="text-align"],
+  .document-header div[style*="justify-content"] {
+    text-align: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  /* FLEXBOX CENTERING FOR LOGO CONTAINERS */
+  html body .document-header div[style*="display: flex"],
+  html body .document-header div[style*="justify-content: center"] {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
   }
 
   /* ===== PROFESSIONAL DOCUMENT TEXT ALIGNMENT ===== */
@@ -378,6 +403,68 @@
   
   /* Print media queries for text alignment */
   @media print {
+    /* PRINT SIGNATURE LAYOUT - FORCE HORIZONTAL */
+    .signature-container {
+      display: flex !important;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      width: 100% !important;
+      margin: 20pt 0 !important;
+      padding: 0 !important;
+      gap: 30pt !important;
+      page-break-inside: avoid !important;
+    }
+    
+    .signature-container .end-signature-signed {
+      flex: 1 !important;
+      width: 45% !important;
+      max-width: 45% !important;
+    }
+    
+    .signature-container h4 {
+      font-size: 12pt !important;
+      font-weight: bold !important;
+      margin-bottom: 10pt !important;
+    }
+    
+    .signature-container img {
+      max-width: 120pt !important;
+      max-height: 40pt !important;
+      margin: 8pt 0 !important;
+    }
+    
+    .signature-container .signer-name {
+      font-size: 10pt !important;
+      margin: 8pt 0 3pt 0 !important;
+    }
+    
+    .signature-container .signature-date {
+      font-size: 9pt !important;
+      margin: 3pt 0 0 0 !important;
+    }
+    
+    /* NUCLEAR PRINT LOGO CENTERING - BULLETPROOF */
+    html body .document-header,
+    html body .document-header *,
+    html body .document-content .document-header,
+    html body .document-preview-content .document-header,
+    html body .print-content .document-header,
+    html body .document-content .document-header *,
+    html body .document-preview-content .document-header *,
+    html body .print-content .document-header *,
+    html body .logo-container,
+    html body .document-content .logo-container,
+    html body .document-preview-content .logo-container,
+    html body .print-content .logo-container,
+    .document-header[style*="text-align"],
+    .document-header div[style*="justify-content"] {
+      text-align: center !important;
+      justify-content: center !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      display: block !important;
+    }
+    
     /* UNIFIED PRINT STYLES FOR ALL DOCUMENT COMPONENTS */
     .document-content,
     .document-preview-content,
@@ -515,6 +602,70 @@
     .document-preview-content .center-section,
     .print-content .center-section {
       text-align: center !important;
+    }
+    
+    /* ENHANCED PRINT-SPECIFIC SIGNATURE LAYOUT */
+    /* Perfect side-by-side signature layout for print */
+    .document-content .signature-container,
+    .document-preview-content .signature-container,
+    .print-content .signature-container,
+    .signature-container {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: flex-start !important;
+      width: 100% !important;
+      margin: 30pt 0 !important;
+      padding: 0 20pt !important;
+      min-height: 120pt !important;
+      page-break-inside: avoid !important;
+      gap: 30pt !important;
+    }
+    
+    /* Signature boxes - exact 50/50 split for print */
+    .document-content .signature-container .end-signature-signed,
+    .document-preview-content .signature-container .end-signature-signed,
+    .print-content .signature-container .end-signature-signed,
+    .signature-container .end-signature-signed {
+      flex: 1 1 45% !important;
+      width: 45% !important;
+      max-width: 45% !important;
+      min-height: 100pt !important;
+      page-break-inside: avoid !important;
+    }
+    
+    /* Signature lines for print */
+    .document-content .signature-container .signature-line,
+    .document-preview-content .signature-container .signature-line,
+    .print-content .signature-container .signature-line,
+    .signature-container .signature-line {
+      width: 100% !important;
+      height: 1pt !important;
+      background-color: #000 !important;
+      margin: 15pt 0 10pt 0 !important;
+      border: none !important;
+      border-top: 1pt solid #000 !important;
+    }
+    
+    /* Name fields for print */
+    .document-content .signature-container .signer-name,
+    .document-preview-content .signature-container .signer-name,
+    .print-content .signature-container .signer-name,
+    .signature-container .signer-name {
+      font-size: 11pt !important;
+      font-weight: bold !important;
+      margin: 10pt 0 5pt 0 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5pt !important;
+    }
+    
+    /* Date fields for print */
+    .document-content .signature-container .signature-date,
+    .document-preview-content .signature-container .signature-date,
+    .print-content .signature-container .signature-date,
+    .signature-container .signature-date {
+      font-size: 10pt !important;
+      margin: 8pt 0 0 0 !important;
+      font-weight: normal !important;
     }
   }
 }

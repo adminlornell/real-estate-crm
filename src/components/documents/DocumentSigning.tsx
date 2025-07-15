@@ -101,9 +101,10 @@ export default function DocumentSigning({
         const sellerSignatureHTML = `
           <div class="end-signature-signed">
             <h4>Seller/Landlord:</h4>
-            <img src="${signatures.seller.data}" alt="Seller Signature" style="max-width: 200px; max-height: 60px; border: 2px solid #000; padding: 5px; background: white; margin: 10px 0;"/>
-            <p><strong>Name:</strong> ${signatures.seller.signerName || 'Not provided'}</p>
-            <p><strong>Date:</strong> ${signatures.seller.signerDate || 'Not provided'}</p>
+            <div class="signature-line"></div>
+            <img src="${signatures.seller.data}" alt="Seller Signature"/>
+            <p class="signer-name">${signatures.seller.signerName || 'Not provided'}</p>
+            <p class="signature-date">Date: ${signatures.seller.signerDate || 'Not provided'}</p>
           </div>
         `;
         updatedContent = updatedContent.replace(/\{\{SELLER_SIGNATURE_COMPONENT\}\}/g, sellerSignatureHTML);
@@ -114,9 +115,10 @@ export default function DocumentSigning({
         const brokerSignatureHTML = `
           <div class="end-signature-signed">
             <h4>Broker:</h4>
-            <img src="${signatures.broker.data}" alt="Broker Signature" style="max-width: 200px; max-height: 60px; border: 2px solid #000; padding: 5px; background: white; margin: 10px 0;"/>
-            <p><strong>Name:</strong> ${signatures.broker.signerName || 'Not provided'}</p>
-            <p><strong>Date:</strong> ${signatures.broker.signerDate || 'Not provided'}</p>
+            <div class="signature-line"></div>
+            <img src="${signatures.broker.data}" alt="Broker Signature"/>
+            <p class="signer-name">${signatures.broker.signerName || 'Not provided'}</p>
+            <p class="signature-date">Date: ${signatures.broker.signerDate || 'Not provided'}</p>
           </div>
         `;
         updatedContent = updatedContent.replace(/\{\{BROKER_SIGNATURE_COMPONENT\}\}/g, brokerSignatureHTML);
@@ -162,29 +164,31 @@ export default function DocumentSigning({
         
         if (signatures.seller) {
           sellerSignatureHtml = `
-            <div class="end-signature-signed" style="display: inline-block !important; width: 45% !important; vertical-align: top !important; margin-right: 5% !important; padding: 20px; border: 2px solid #000; background-color: #f9f9f9; border-radius: 8px;">
+            <div class="end-signature-signed">
               <h4>Seller/Landlord:</h4>
-              <img src="${signatures.seller.data}" alt="Seller Signature" style="max-width: 200px; max-height: 60px; border: 2px solid #000; padding: 5px; background: white; margin: 10px 0;"/>
-              <p><strong>Name:</strong> ${signatures.seller.signerName || 'Not provided'}</p>
-              <p><strong>Date:</strong> ${signatures.seller.signerDate || 'Not provided'}</p>
+              <div class="signature-line"></div>
+              <img src="${signatures.seller.data}" alt="Seller Signature"/>
+              <p class="signer-name">${signatures.seller.signerName || 'Not provided'}</p>
+              <p class="signature-date">Date: ${signatures.seller.signerDate || 'Not provided'}</p>
             </div>
           `;
         }
         
         if (signatures.broker) {
           brokerSignatureHtml = `
-            <div class="end-signature-signed" style="display: inline-block !important; width: 45% !important; vertical-align: top !important; margin-right: 0 !important; padding: 20px; border: 2px solid #000; background-color: #f9f9f9; border-radius: 8px;">
+            <div class="end-signature-signed">
               <h4>Broker:</h4>
-              <img src="${signatures.broker.data}" alt="Broker Signature" style="max-width: 200px; max-height: 60px; border: 2px solid #000; padding: 5px; background: white; margin: 10px 0;"/>
-              <p><strong>Name:</strong> ${signatures.broker.signerName || 'Not provided'}</p>
-              <p><strong>Date:</strong> ${signatures.broker.signerDate || 'Not provided'}</p>
+              <div class="signature-line"></div>
+              <img src="${signatures.broker.data}" alt="Broker Signature"/>
+              <p class="signer-name">${signatures.broker.signerName || 'Not provided'}</p>
+              <p class="signature-date">Date: ${signatures.broker.signerDate || 'Not provided'}</p>
             </div>
           `;
         }
         
         // Create the proper signature container structure
         const signatureContainerHtml = `
-          <div class="signature-container" style="display: block !important; width: 100% !important; margin: 20px 0 !important; padding: 0 !important; text-align: left !important;">
+          <div class="signature-container">
             ${sellerSignatureHtml}
             ${brokerSignatureHtml}
           </div>
