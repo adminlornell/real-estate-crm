@@ -19,6 +19,26 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     headers: {
       'x-my-custom-header': 'real-estate-crm',
     },
+    fetch: (url, options = {}) => {
+      // Set reasonable timeouts for requests
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+      
+      return fetch(url, {
+        ...options,
+        signal: controller.signal,
+      }).finally(() => {
+        clearTimeout(timeoutId)
+      })
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2,
+    },
   },
 })
 

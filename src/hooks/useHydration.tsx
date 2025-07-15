@@ -7,13 +7,6 @@ export function useHydration() {
 
   useEffect(() => {
     setIsHydrated(true)
-    
-    // Fallback timeout in case hydration detection fails
-    const timeout = setTimeout(() => {
-      setIsHydrated(true)
-    }, 1000)
-    
-    return () => clearTimeout(timeout)
   }, [])
 
   return isHydrated
@@ -25,9 +18,25 @@ interface HydrationGuardProps {
 }
 
 export function HydrationGuard({ children, fallback }: HydrationGuardProps) {
-  const isHydrated = useHydration()
+  const [isHydrated, setIsHydrated] = useState(false)
 
-  // Always render children to avoid hydration mismatches
-  // The isHydrated check can be used by children components if needed
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
+  // During SSR and before hydration, always render the same content
+  if (!isHydrated) {
+    return (
+      <>
+        {fallback || (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+      </>
+    )
+  }
+
+  // After hydration, render the actual children
   return <>{children}</>
 } 
