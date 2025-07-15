@@ -80,10 +80,12 @@ export default function RecentActivitiesPage() {
     try {
       setLoading(true)
       
+      if (!user?.id) return;
+
       const { data: agent } = await supabase
         .from('agents')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .single()
 
       if (!agent) return
@@ -385,7 +387,7 @@ export default function RecentActivitiesPage() {
                         <div className="flex items-center space-x-2">
                           <Clock className="w-3 h-3 text-gray-400" />
                           <span className="text-xs text-gray-500">
-                            {formatTimeAgo(activity.created_at)}
+                            {activity.created_at ? formatTimeAgo(activity.created_at) : 'Unknown time'}
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">

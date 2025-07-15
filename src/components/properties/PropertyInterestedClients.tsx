@@ -109,17 +109,44 @@ export default function PropertyInterestedClients({
       setIsUpdating(true)
       setError(null)
 
-      const { error: insertError } = await supabase
+      // Check for existing interest (active or inactive)
+      const { data: existingInterest, error: existingError } = await supabase
         .from('client_property_interests')
-        .insert({
-          client_id: clientId,
-          property_id: property.id,
-          interest_level: interestLevel,
-          added_by: currentAgentId,
-          status: 'active'
-        })
+        .select('id, status, interest_level')
+        .eq('client_id', clientId)
+        .eq('property_id', property.id)
+        .maybeSingle()
 
-      if (insertError) throw insertError
+      if (existingInterest) {
+        if (existingInterest.status === 'active') {
+          throw new Error('This client already has an active interest record for this property')
+        }
+        
+        // Update existing inactive record to active with new interest level
+        const { error: updateError } = await supabase
+          .from('client_property_interests')
+          .update({
+            interest_level: interestLevel,
+            status: 'active',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingInterest.id)
+
+        if (updateError) throw updateError
+      } else {
+        // Create new record
+        const { error: insertError } = await supabase
+          .from('client_property_interests')
+          .insert({
+            client_id: clientId,
+            property_id: property.id,
+            interest_level: interestLevel,
+            added_by: currentAgentId,
+            status: 'active'
+          })
+
+        if (insertError) throw insertError
+      }
 
       await fetchInterestedClients()
       setShowAddModal(false)

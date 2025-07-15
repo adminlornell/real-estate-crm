@@ -160,6 +160,12 @@ export default function DocumentsPage() {
                     Browse Templates
                   </Button>
                 </Link>
+                <Link href="/documents/signed">
+                  <Button variant="outline" className="border-green-400 text-green-800 hover:bg-green-50">
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Signed Documents
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

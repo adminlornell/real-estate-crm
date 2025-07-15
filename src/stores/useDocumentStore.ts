@@ -133,7 +133,12 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         .single();
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
 
@@ -146,12 +151,18 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       return data;
     } catch (error) {
       console.error('Error creating document:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        code: (error as any)?.code,
-        details: (error as any)?.details,
-        hint: (error as any)?.hint
-      });
+      
+      // Better error serialization
+      if (error && typeof error === 'object') {
+        console.error('Error details:', {
+          message: (error as any).message || 'Unknown error',
+          code: (error as any).code,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          stack: (error as any).stack
+        });
+      }
+      
       throw error; // Re-throw so the UI can handle it
     }
   },

@@ -141,7 +141,7 @@ SELECT
         </div>
         
         <div class="signatures-section">
-            <h2>SIGNATURES</h2>
+            <h2>AGREED AND ACCEPTED</h2>
             <div class="signature-block">
                 <p>___________________________ Date: ___________</p>
                 <p>Seller Signature</p>
@@ -216,7 +216,7 @@ SELECT
         </div>
         
         <div class="signatures-section">
-            <h2>SIGNATURES</h2>
+            <h2>AGREED AND ACCEPTED</h2>
             <div class="signature-block">
                 <p>___________________________ Date: ___________</p>
                 <p>Property Owner Signature</p>

@@ -6,11 +6,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentStore } from '@/stores/useDocumentStore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { ArrowLeft, Download, Edit, FileText, Home, List, Plus, Settings, Share2, Printer, Eye } from 'lucide-react';
+import { ArrowLeft, Download, Edit, FileText, Home, List, Plus, Settings, Share2, Printer, Eye, PenTool } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import PrintPreview from '@/components/documents/PrintPreview';
+import DocumentSigning from '@/components/documents/DocumentSigning';
+import { makeAuthenticatedRequest } from '@/lib/api';
+import { saveSignedDocument } from '@/lib/signedDocuments';
 
 interface DocumentWithTemplate {
   id: string;
@@ -24,18 +27,17 @@ interface DocumentWithTemplate {
   finalized_at: string | null;
   template_id: string | null;
   document_templates: any | null;
-  clients?: { first_name: string; last_name: string; email: string };
+  clients?: { id: string; first_name: string; last_name: string; email: string };
   properties?: { address: string };
 }
 
 export default function DocumentViewPage() {
   const params = useParams();
-  const { user } = useAuth();
+  const { user, agent } = useAuth();
   const [document, setDocument] = useState<DocumentWithTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
-
-  const { generatePDF } = useDocumentStore();
+  const [showSigningInterface, setShowSigningInterface] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -56,7 +58,7 @@ export default function DocumentViewPage() {
         .select(`
           *,
           document_templates(*),
-          clients(first_name, last_name, email),
+          clients(id, first_name, last_name, email),
           properties(address)
         `)
         .eq('id', documentId)
@@ -83,11 +85,21 @@ export default function DocumentViewPage() {
   const handleGeneratePDF = async () => {
     if (!document) return;
     
-    const pdfUrl = await generatePDF(document.id);
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-      // Refresh document to get updated PDF URL
-      await fetchDocument(document.id);
+    try {
+      const response = await fetch('/api/documents/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentId: document.id })
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     }
   };
 
@@ -226,6 +238,15 @@ export default function DocumentViewPage() {
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  className="border-purple-400 text-purple-800 hover:bg-purple-50 font-medium"
+                  onClick={() => setShowSigningInterface(true)}
+                >
+                  <PenTool className="w-4 h-4 mr-2" />
+                  Sign Document
                 </Button>
                 
                 {document.pdf_url ? (
@@ -444,19 +465,58 @@ export default function DocumentViewPage() {
         <PrintPreview
           isOpen={showPrintPreview}
           onClose={() => setShowPrintPreview(false)}
-          document={{
+          documentData={{
             id: document.id,
             title: document.title || document.document_name,
             content: generateContent(),
             document_templates: document.document_templates,
             field_values: document.field_values
           }}
-          onPrint={() => {
-            setShowPrintPreview(false);
-            setTimeout(() => window.print(), 100);
-          }}
+          onPrint={undefined}
           onDownload={document.pdf_url ? () => window.open(document.pdf_url!, '_blank') : handleGeneratePDF}
         />
+      )}
+
+      {/* Document Signing Interface */}
+      {showSigningInterface && document && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <DocumentSigning
+              documentData={{
+                id: document.id,
+                title: document.title || document.document_name,
+                content: generateContent()
+              }}
+              onSigningComplete={async (documentWithSignatures) => {
+                console.log('Document signed:', documentWithSignatures);
+                
+                try {
+                  // Save signed document to local storage (now async)
+                  const signedDoc = await saveSignedDocument({
+                    title: documentWithSignatures.title || 'Untitled Document',
+                    content: documentWithSignatures.content, // This includes the embedded signatures
+                    signedBy: documentWithSignatures.signed_by,
+                    signedAt: documentWithSignatures.signed_at,
+                    signature: JSON.stringify(documentWithSignatures.signatures), // Store all signatures
+                    signingDate: new Date().toISOString().split('T')[0],
+                    templateName: document.document_templates?.name
+                  });
+
+                  setShowSigningInterface(false);
+                  alert('Document signed and saved successfully!');
+                  
+                  // Redirect to the signed document view
+                  window.open(`/documents/signed/${signedDoc.id}`, '_blank');
+                } catch (error) {
+                  console.error('Error saving signed document:', error);
+                  alert('Document signed but failed to save. Please try again or check your browser storage.');
+                  setShowSigningInterface(false);
+                }
+              }}
+              onCancel={() => setShowSigningInterface(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

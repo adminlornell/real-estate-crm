@@ -79,17 +79,27 @@ export default function CreateTemplatePage() {
 
     setIsSubmitting(true);
     try {
+      // Add logo header to template content if it doesn't already exist
+      let finalTemplateContent = templateContent;
+      if (!templateContent.includes('document-header')) {
+        const logoHeader = `<div class="document-header" style="text-align: center; margin-bottom: 30px;">
+  <div style="height: 60px; overflow: hidden; display: flex; justify-content: center; align-items: center; margin: 0 auto; max-width: 200px;">
+    <img src="/logo.svg" alt="Company Logo" style="height: 100px; width: auto; margin-top: -20px; margin-bottom: -20px;" />
+  </div>
+</div>`;
+        finalTemplateContent = logoHeader + templateContent;
+      }
+
       const { data, error } = await supabase
         .from('document_templates')
-        .insert([{
+        .insert({
           name: templateName,
           description: templateDescription,
           document_type: documentType,
-          template_content: templateContent,
-          template_fields: templateFields,
-          is_active: true,
-          created_by: user.id
-        }])
+          template_content: finalTemplateContent,
+          template_fields: templateFields as any, // Cast to Json type for Supabase
+          is_active: true
+        })
         .select()
         .single();
 

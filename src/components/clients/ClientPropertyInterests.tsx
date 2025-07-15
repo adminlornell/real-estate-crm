@@ -110,19 +110,49 @@ export default function ClientPropertyInterests({
       setIsUpdating(true)
       setError(null)
 
-      const { error: insertError } = await supabase
+      // Check for existing interest (active or inactive)
+      const { data: existingInterest, error: existingError } = await supabase
         .from('client_property_interests')
-        .insert({
-          client_id: client.id,
-          property_id: propertyId,
-          interest_level: interestLevel,
-          added_by: currentAgentId,
-          status: 'active'
-        })
+        .select('id, status, interest_level')
+        .eq('client_id', client.id)
+        .eq('property_id', propertyId)
+        .maybeSingle()
 
-      if (insertError) {
-        console.error('Supabase insert error:', insertError)
-        throw insertError
+      if (existingInterest) {
+        if (existingInterest.status === 'active') {
+          throw new Error('This client already has an active interest record for this property')
+        }
+        
+        // Update existing inactive record to active with new interest level
+        const { error: updateError } = await supabase
+          .from('client_property_interests')
+          .update({
+            interest_level: interestLevel,
+            status: 'active',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingInterest.id)
+
+        if (updateError) {
+          console.error('Supabase update error:', updateError)
+          throw updateError
+        }
+      } else {
+        // Create new record
+        const { error: insertError } = await supabase
+          .from('client_property_interests')
+          .insert({
+            client_id: client.id,
+            property_id: propertyId,
+            interest_level: interestLevel,
+            added_by: currentAgentId,
+            status: 'active'
+          })
+
+        if (insertError) {
+          console.error('Supabase insert error:', insertError)
+          throw insertError
+        }
       }
 
       await fetchPropertyInterests()

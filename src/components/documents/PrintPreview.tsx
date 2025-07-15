@@ -20,7 +20,7 @@ import {
 interface PrintPreviewProps {
   isOpen: boolean;
   onClose: () => void;
-  document: {
+  documentData: {
     id: string;
     title: string;
     content: string;
@@ -37,7 +37,7 @@ interface PrintPreviewProps {
 export default function PrintPreview({ 
   isOpen, 
   onClose, 
-  document, 
+  documentData, 
   onPrint, 
   onDownload 
 }: PrintPreviewProps) {
@@ -82,14 +82,14 @@ export default function PrintPreview({
   }, [isOpen]);
 
   const generateContent = () => {
-    if (!document?.document_templates?.template_content) {
-      return document.content || '';
+    if (!documentData?.document_templates?.template_content) {
+      return documentData.content || '';
     }
     
-    let content = document.document_templates.template_content;
+    let content = documentData.document_templates.template_content;
     
-    if (document.field_values) {
-      Object.entries(document.field_values).forEach(([key, value]) => {
+    if (documentData.field_values) {
+      Object.entries(documentData.field_values).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
         content = content.replace(new RegExp(placeholder, 'g'), String(value || ''));
       });
@@ -111,9 +111,179 @@ export default function PrintPreview({
   };
 
   const handlePrint = () => {
-    if (onPrint) {
-      onPrint();
-    } else {
+    try {
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Popup blocked');
+      }
+      
+      // Use actual document content (with signatures) first, fall back to template generation
+      const content = documentData.content || generateContent();
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title></title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            @page {
+              margin: 20mm;
+              size: A4;
+              /* Remove headers and footers */
+              @top-left { content: ""; }
+              @top-center { content: ""; }
+              @top-right { content: ""; }
+              @bottom-left { content: ""; }
+              @bottom-center { content: ""; }
+              @bottom-right { content: ""; }
+            }
+            body {
+              font-family: 'Times New Roman', serif;
+              line-height: 1.6;
+              color: #000;
+              font-size: 12pt;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            /* Ensure no browser defaults interfere */
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            h1 {
+              text-align: center;
+              font-size: 18pt;
+              font-weight: bold;
+              margin-bottom: 20pt;
+              text-transform: uppercase;
+              border-bottom: 2pt solid #000;
+              padding-bottom: 10pt;
+            }
+            h2 {
+              font-size: 14pt;
+              font-weight: bold;
+              margin-top: 20pt;
+              margin-bottom: 10pt;
+              text-transform: uppercase;
+              border-bottom: 1pt solid #333;
+              padding-bottom: 5pt;
+            }
+            h3 {
+              font-size: 12pt;
+              font-weight: bold;
+              margin-top: 15pt;
+              margin-bottom: 8pt;
+              text-decoration: underline;
+            }
+            p {
+              margin-bottom: 8pt;
+              text-align: justify;
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+              margin: 15pt 0;
+            }
+            td, th {
+              border: 1pt solid #000;
+              padding: 8pt;
+              text-align: left;
+            }
+            
+            /* BULLETPROOF SIGNATURE SIDE-BY-SIDE LAYOUT */
+            .signature-container .end-signature-signed {
+              display: inline-block !important;
+              width: 45% !important;
+              vertical-align: top !important;
+              margin-right: 5% !important;
+            }
+            
+            .signature-container .end-signature-signed:last-child {
+              margin-right: 0 !important;
+            }
+            
+            /* AGGRESSIVE FALLBACK - Force ANY signature elements to be side-by-side */
+            .end-signature-signed {
+              display: inline-block !important;
+              width: 45% !important;
+              vertical-align: top !important;
+              margin-right: 5% !important;
+              box-sizing: border-box !important;
+            }
+            
+            .end-signature-signed:last-of-type,
+            .end-signature-signed:nth-child(2) {
+              margin-right: 0 !important;
+            }
+            
+            /* Force container to be block */
+            .signature-container,
+            .signatures-section {
+              display: block !important;
+              width: 100% !important;
+              clear: both !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${content}
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      printWindow.focus();
+      
+      // Wait for content to load then print
+      setTimeout(() => {
+        // Show instructions for removing headers/footers
+        const userAgent = navigator.userAgent.toLowerCase();
+        let instructions = '';
+        
+        if (userAgent.includes('chrome')) {
+          instructions = 'In the print dialog, click "More settings" and uncheck "Headers and footers" for a clean print.';
+        } else if (userAgent.includes('firefox')) {
+          instructions = 'In the print dialog, go to "Page Setup" and set headers/footers to "Blank" for a clean print.';
+        } else if (userAgent.includes('safari')) {
+          instructions = 'In the print dialog, uncheck "Print headers and footers" for a clean print.';
+        } else {
+          instructions = 'In the print dialog, look for options to disable headers and footers for a clean print.';
+        }
+        
+        // Add instruction to the print window
+        const instructionDiv = printWindow.document.createElement('div');
+        instructionDiv.style.cssText = `
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          background: #f0f0f0;
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          font-size: 10px;
+          max-width: 200px;
+          z-index: 1000;
+          font-family: Arial, sans-serif;
+        `;
+        instructionDiv.innerHTML = `<strong>Tip:</strong> ${instructions}`;
+        printWindow.document.body.appendChild(instructionDiv);
+        
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+      
+      if (onPrint) {
+        onPrint();
+      }
+    } catch (error) {
+      console.error('Print failed:', error);
+      // Fallback to regular print
       window.print();
     }
   };
@@ -143,12 +313,12 @@ export default function PrintPreview({
       }`}>
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b-2 border-gray-200 bg-gray-50">
+        <div className="print-controls flex items-center justify-between p-4 border-b-2 border-gray-200 bg-gray-50">
           <div className="flex items-center space-x-3">
             <Eye className="w-6 h-6 text-blue-600" />
             <div>
               <h2 className="text-xl font-bold text-gray-900">Print Preview</h2>
-              <p className="text-sm text-gray-600">{document.title}</p>
+              <p className="text-sm text-gray-600">{documentData.title}</p>
             </div>
           </div>
 
@@ -209,7 +379,7 @@ export default function PrintPreview({
             </Button>
 
             {/* Print Button */}
-            <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white">
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
@@ -288,7 +458,7 @@ export default function PrintPreview({
                     {zoomLevels.map(level => (
                       <Button
                         key={level}
-                        variant={zoom === level ? "default" : "outline"}
+                        variant={zoom === level ? "primary" : "outline"}
                         size="sm"
                         onClick={() => setZoom(level)}
                         className="text-xs"
@@ -307,7 +477,8 @@ export default function PrintPreview({
             <div className="flex justify-center">
               <div 
                 ref={previewRef}
-                className="print-preview-page bg-white shadow-2xl"
+                id="print-content"
+                className="print-content print-preview-page bg-white shadow-2xl"
                 style={{
                   width: `${currentSize.width * scaleForPreview}px`,
                   height: `${currentSize.height * scaleForPreview}px`,
@@ -447,20 +618,141 @@ export default function PrintPreview({
           border-radius: 3pt;
         }
 
+        /* BULLETPROOF SIGNATURE SIDE-BY-SIDE LAYOUT FOR PREVIEW */
+        .document-preview-content .signature-container .end-signature-signed {
+          display: inline-block !important;
+          width: 45% !important;
+          vertical-align: top !important;
+          margin-right: 5% !important;
+        }
+        
+        .document-preview-content .signature-container .end-signature-signed:last-child {
+          margin-right: 0 !important;
+        }
+
+        /* AGGRESSIVE FALLBACK FOR PREVIEW - Force ANY signature elements to be side-by-side */
+        .document-preview-content .end-signature-signed {
+          display: inline-block !important;
+          width: 45% !important;
+          vertical-align: top !important;
+          margin-right: 5% !important;
+          box-sizing: border-box !important;
+        }
+        
+        .document-preview-content .end-signature-signed:last-of-type,
+        .document-preview-content .end-signature-signed:nth-child(2) {
+          margin-right: 0 !important;
+        }
+        
+        /* Force container to be block for preview */
+        .document-preview-content .signature-container,
+        .document-preview-content .signatures-section {
+          display: block !important;
+          width: 100% !important;
+          clear: both !important;
+        }
+
         @media print {
-          .print-preview-page {
+          @page {
+            margin: 20mm;
+            size: auto;
+            /* Remove browser's default headers and footers */
+            margin-top: 0;
+            margin-bottom: 0;
+          }
+          
+          /* Hide browser's default print elements */
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          
+          /* Remove any default browser print styling */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          /* Hide UI elements but not print dialog triggers */
+          .fixed:not(.print-content),
+          .absolute:not(.print-content),
+          nav,
+          header,
+          footer,
+          .bg-gray-50,
+          .border-t-2,
+          .z-50,
+          .print-controls {
+            display: none !important;
+          }
+          
+          /* Hide everything except our print content */
+          body > *:not(#print-content) {
+            display: none !important;
+          }
+          
+          /* Ensure only our content shows */
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
+          /* Show only print content */
+          #print-content {
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
             box-shadow: none !important;
             border: none !important;
             margin: 0 !important;
             padding: 0 !important;
             transform: none !important;
-            width: 100% !important;
-            height: 100% !important;
+            background: white !important;
+            visibility: visible !important;
           }
           
           .document-preview-content {
             font-size: 12pt !important;
             line-height: 1.4 !important;
+            color: #000 !important;
+            background: white !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+          }
+          
+          /* Ensure proper print formatting */
+          .document-preview-content h1 {
+            page-break-after: avoid !important;
+          }
+          
+          .document-preview-content h2,
+          .document-preview-content h3 {
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          
+          .document-preview-content p {
+            orphans: 3 !important;
+            widows: 3 !important;
+          }
+          
+          .document-preview-content table {
+            page-break-inside: avoid !important;
+          }
+          
+          /* BULLETPROOF PRINT SIGNATURE LAYOUT */
+          .document-preview-content .signature-container .end-signature-signed {
+            display: inline-block !important;
+            width: 45% !important;
+            vertical-align: top !important;
+            margin-right: 5% !important;
+          }
+          
+          .document-preview-content .signature-container .end-signature-signed:last-child {
+            margin-right: 0 !important;
           }
         }
       `}</style>

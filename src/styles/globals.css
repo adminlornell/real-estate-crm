@@ -82,7 +82,7 @@
   a {
     color: hsl(var(--primary));
   }
-  
+
   a:hover {
     color: hsl(var(--primary));
     opacity: 0.8;
@@ -105,5 +105,416 @@
   
   .text-low-contrast {
     color: #4b5563;
+  }
+  
+  /* Professional signature layout - side by side flexbox */
+  .signature-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    margin: 40px 0 !important;
+    padding: 0 10% !important;
+    position: relative !important;
+    min-height: 180px !important;
+    clear: both !important;
+  }
+  
+  /* Signature boxes - flex layout */
+  .signature-container .end-signature-signed,
+  .signature-container .end-signature-placeholder {
+    flex: 0 0 35% !important;
+    width: 35% !important;
+    text-align: left !important;
+    border: 2px solid #000 !important;
+    padding: 15px !important;
+    background-color: #f9f9f9 !important;
+    border-radius: 8px !important;
+    position: relative !important;
+  }
+  
+  /* Signature box styling */
+  .signature-container .end-signature-signed h4,
+  .signature-container .end-signature-placeholder h4 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 15px !important;
+    color: #374151 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    text-align: left !important;
+  }
+  
+  /* Remove signature line styling that conflicts */
+  .signature-container .end-signature-signed::before,
+  .signature-container .end-signature-placeholder::before {
+    display: none !important;
+  }
+  
+  /* Signature image positioning */
+  .signature-container .end-signature-signed img {
+    display: block !important;
+    margin: 0 0 10px 0 !important;
+    max-width: 180px !important;
+    max-height: 50px !important;
+    border: 1px solid #000 !important;
+    padding: 5px !important;
+    background: white !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  /* Signature details styling */
+  .signature-container .end-signature-signed p,
+  .signature-container .end-signature-placeholder p {
+    font-size: 12px !important;
+    margin: 3px 0 !important;
+    color: #374151 !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+  }
+  
+  /* Remove conflicting signature labels */
+  .signature-container .end-signature-signed .signature-label,
+  .signature-container .end-signature-placeholder .signature-label {
+    display: none !important;
+  }
+  
+  /* Responsive adjustments for smaller screens */
+  @media (max-width: 768px) {
+    .signature-container {
+      flex-direction: column !important;
+      padding: 0 5% !important;
+      min-height: 300px !important;
+    }
+    
+    .signature-container .end-signature-signed,
+    .signature-container .end-signature-placeholder {
+      flex: none !important;
+      width: 100% !important;
+      margin-bottom: 20px !important;
+    }
+    
+    .signature-container .end-signature-signed:last-child,
+    .signature-container .end-signature-placeholder:last-child {
+      margin-bottom: 0 !important;
+    }
+  }
+  
+  /* Document content signature container consistency */
+  .document-content .signature-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    position: relative !important;
+    padding: 0 10% !important;
+  }
+  
+  .document-content .signature-container .end-signature-signed {
+    display: block !important;
+    text-align: left !important;
+  }
+  
+  /* Document logo styling */
+  .document-header {
+    page-break-inside: avoid !important;
+    margin-bottom: 30px !important;
+  }
+  
+  .document-header img {
+    height: 100px !important;
+    width: auto !important;
+    max-width: 200px !important;
+    display: block !important;
+    margin: -20px auto !important;
+  }
+  
+  /* Logo container for proper cropping */
+  .logo-container {
+    height: 60px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
+    max-width: 200px !important;
+  }
+  
+  /* Specific styling for live preview - move logo down by 20px */
+  .bg-gray-50 .document-header {
+    margin-top: 20px !important;
+    margin-bottom: 30px !important;
+  }
+  
+  /* Make logo 1.5x larger in live preview */
+  .bg-gray-50 .document-header img {
+    height: 150px !important;
+    margin: -30px auto !important;
+  }
+  
+  .bg-gray-50 .logo-container {
+    height: 90px !important;
+  }
+  
+  /* Alternative targeting for live preview container */
+  div[style*="maxHeight: calc(100vh - 250px)"] .document-header {
+    margin-top: 20px !important;
+    margin-bottom: 30px !important;
+  }
+  
+  /* Make logo 1.5x larger in live preview - alternative targeting */
+  div[style*="maxHeight: calc(100vh - 250px)"] .document-header img {
+    height: 150px !important;
+    margin: -30px auto !important;
+  }
+  
+  div[style*="maxHeight: calc(100vh - 250px)"] .logo-container {
+    height: 90px !important;
+  }
+
+  /* ===== PROFESSIONAL DOCUMENT TEXT ALIGNMENT ===== */
+  
+  /* Ensure all document content sections are left-aligned */
+  .document-content,
+  .document-preview-content,
+  .print-content {
+    text-align: left !important;
+  }
+  
+  /* All text content should be left-aligned */
+  .document-content p,
+  .document-preview-content p,
+  .print-content p,
+  .document-content div,
+  .document-preview-content div,
+  .print-content div {
+    text-align: left !important;
+  }
+  
+  /* Section headings left-aligned (except main title) */
+  .document-content h2,
+  .document-preview-content h2,
+  .print-content h2,
+  .document-content h3,
+  .document-preview-content h3,
+  .print-content h3 {
+    text-align: left !important;
+  }
+  
+  /* Main document title remains centered */
+  .document-content h1,
+  .document-preview-content h1,
+  .print-content h1 {
+    text-align: center !important;
+  }
+  
+  /* Document sections left-aligned */
+  .document-content .property-section,
+  .document-content .parties-section,
+  .document-content .terms-section,
+  .document-preview-content .property-section,
+  .document-preview-content .parties-section,
+  .document-preview-content .terms-section,
+  .print-content .property-section,
+  .print-content .parties-section,
+  .print-content .terms-section {
+    text-align: left !important;
+  }
+  
+  /* Signature section title remains centered, but content is managed separately */
+  .document-content .signatures-section h2,
+  .document-preview-content .signatures-section h2,
+  .print-content .signatures-section h2 {
+    text-align: center !important;
+  }
+
+  /* ===== CENTER-ALIGN UTILITY CLASSES ===== */
+  
+  /* Override left-alignment for specific elements when needed */
+  .document-content .text-center,
+  .document-preview-content .text-center,
+  .print-content .text-center {
+    text-align: center !important;
+  }
+  
+  .document-content .center-text,
+  .document-preview-content .center-text,
+  .print-content .center-text {
+    text-align: center !important;
+  }
+  
+  .document-content .center-section,
+  .document-preview-content .center-section,
+  .print-content .center-section {
+    text-align: center !important;
+  }
+  
+  .document-content .center-content,
+  .document-preview-content .center-content,
+  .print-content .center-content {
+    text-align: center !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Specific override for centered paragraphs */
+  .document-content p.text-center,
+  .document-preview-content p.text-center,
+  .print-content p.text-center,
+  .document-content p.center-text,
+  .document-preview-content p.center-text,
+  .print-content p.center-text {
+    text-align: center !important;
+  }
+  
+  /* Specific override for centered divs */
+  .document-content div.text-center,
+  .document-preview-content div.text-center,
+  .print-content div.text-center,
+  .document-content div.center-section,
+  .document-preview-content div.center-section,
+  .print-content div.center-section {
+    text-align: center !important;
+  }
+  
+  /* Print media queries for text alignment */
+  @media print {
+    /* UNIFIED PRINT STYLES FOR ALL DOCUMENT COMPONENTS */
+    .document-content,
+    .document-preview-content,
+    .print-content {
+      text-align: left !important;
+      font-family: 'Times New Roman', serif !important;
+      font-size: 12pt !important;
+      line-height: 1.4 !important;
+      color: black !important;
+    }
+    
+    .document-content p,
+    .document-preview-content p,
+    .print-content p,
+    .document-content div,
+    .document-preview-content div,
+    .print-content div {
+      text-align: left !important;
+    }
+    
+    .document-content h2,
+    .document-preview-content h2,
+    .print-content h2,
+    .document-content h3,
+    .document-preview-content h3,
+    .print-content h3 {
+      text-align: left !important;
+    }
+    
+    .document-content h1,
+    .document-preview-content h1,
+    .print-content h1 {
+      text-align: center !important;
+    }
+    
+    /* UNIVERSAL SIGNATURE LAYOUT - WORKS FOR ALL PRINT METHODS */
+    .document-content .signature-container,
+    .document-preview-content .signature-container,
+    .print-content .signature-container,
+    .signature-container {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: flex-start !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 20pt 0 !important;
+      padding: 0 10% !important;
+      text-align: left !important;
+      position: relative !important;
+      clear: both !important;
+      min-height: 120pt !important;
+    }
+    
+    .document-content .signature-container .end-signature-signed,
+    .document-preview-content .signature-container .end-signature-signed,
+    .print-content .signature-container .end-signature-signed,
+    .signature-container .end-signature-signed {
+      flex: 0 0 35% !important;
+      width: 35% !important;
+      text-align: left !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      background: none !important;
+      border-radius: 0 !important;
+      position: relative !important;
+    }
+    
+    .document-content .signature-container .end-signature-signed h4,
+    .document-preview-content .signature-container .end-signature-signed h4,
+    .print-content .signature-container .end-signature-signed h4,
+    .signature-container .end-signature-signed h4 {
+      text-align: left !important;
+      font-size: 12pt !important;
+      font-weight: bold !important;
+      margin-bottom: 10pt !important;
+      text-transform: uppercase !important;
+    }
+    
+    .document-content .signature-container .end-signature-signed img,
+    .document-preview-content .signature-container .end-signature-signed img,
+    .print-content .signature-container .end-signature-signed img,
+    .signature-container .end-signature-signed img {
+      display: block !important;
+      margin: 0 0 8pt 0 !important;
+      max-width: 150pt !important;
+      max-height: 40pt !important;
+      border: 1pt solid #000 !important;
+      padding: 3pt !important;
+      background: white !important;
+      text-align: left !important;
+    }
+    
+    .document-content .signature-container .end-signature-signed p,
+    .document-preview-content .signature-container .end-signature-signed p,
+    .print-content .signature-container .end-signature-signed p,
+    .signature-container .end-signature-signed p {
+      text-align: left !important;
+      font-size: 10pt !important;
+      margin: 2pt 0 !important;
+      line-height: 1.2 !important;
+    }
+    
+    /* Override any remaining center alignment for signature elements */
+    .document-content .signature-container *,
+    .document-preview-content .signature-container *,
+    .print-content .signature-container *,
+    .signature-container * {
+      text-align: left !important;
+    }
+    
+    /* Ensure side-by-side positioning is maintained */
+    .document-content .signature-container .end-signature-signed:first-child,
+    .document-preview-content .signature-container .end-signature-signed:first-child,
+    .print-content .signature-container .end-signature-signed:first-child,
+    .signature-container .end-signature-signed:first-child {
+      margin-right: 20pt !important;
+    }
+    
+    .document-content .signature-container .end-signature-signed:last-child,
+    .document-preview-content .signature-container .end-signature-signed:last-child,
+    .print-content .signature-container .end-signature-signed:last-child,
+    .signature-container .end-signature-signed:last-child {
+      margin-left: 20pt !important;
+    }
+    
+    /* Center-align utility classes work in print too */
+    .document-content .text-center,
+    .document-preview-content .text-center,
+    .print-content .text-center,
+    .document-content .center-text,
+    .document-preview-content .center-text,
+    .print-content .center-text,
+    .document-content .center-section,
+    .document-preview-content .center-section,
+    .print-content .center-section {
+      text-align: center !important;
+    }
   }
 }

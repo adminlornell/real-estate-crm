@@ -276,6 +276,12 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
     try {
       setApplying(template.id)
       
+      // Get the current authenticated user for verification
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user?.id) {
+        throw new Error('User not authenticated')
+      }
+      
       // Safely parse the tasks JSON
       let tasks: TaskItem[] = []
       
@@ -321,7 +327,7 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
           title: task.title,
           description: task.description || '',
           assigned_to: agentId,
-          created_by: agentId,
+          created_by: agentId, // Use agent ID as per foreign key constraint
           due_date: dueDate.toISOString(),
           priority: task.priority || 'medium',
           status: 'pending',
@@ -344,7 +350,19 @@ const TaskTemplateApplicator = React.memo(function TaskTemplateApplicator({
         console.error('Supabase insert error:', error)
         console.error('Error details:', JSON.stringify(error, null, 2))
         console.error('Task inserts that failed:', JSON.stringify(taskInserts, null, 2))
-        throw error
+        
+        // Provide more specific error messages
+        if (error.code === '23503') {
+          throw new Error('Database constraint violation. Please check that all referenced data exists.')
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied. Please check your access rights.')
+        } else if (error.message?.includes('RLS')) {
+          throw new Error('Security policy violation. Please ensure you have proper permissions.')
+        } else if (error.message?.includes('assigned_to')) {
+          throw new Error('Invalid agent assignment. Please refresh the page and try again.')
+        } else {
+          throw new Error(`Database error: ${error.message}`)
+        }
       }
 
       console.log('Tasks created successfully:', data?.length, 'tasks')

@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { PenTool, Check, Download } from 'lucide-react';
+import { PenTool, Check, Download, AlertCircle, Eye } from 'lucide-react';
+import SignatureCanvas from '@/components/documents/SignatureCanvas';
 
 export default function DocumentSigningPage() {
   const params = useParams();
@@ -15,44 +16,105 @@ export default function DocumentSigningPage() {
   const [signerDate, setSignerDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSigned, setIsSigned] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSignatureCanvas, setShowSignatureCanvas] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [signatureCoordinates, setSignatureCoordinates] = useState<any>(null);
+  const [document, setDocument] = useState<any>(null);
+  const [signatureRequest, setSignatureRequest] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [processedContent, setProcessedContent] = useState<string>('');
 
-  // Mock document data - in real implementation, fetch from API
-  const mockDocument = {
-    id: documentId,
-    title: 'Exclusive Leasing Agency Agreement',
-    content: `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1>EXCLUSIVE LEASING AGENCY AGREEMENT</h1>
-          <p><strong>DATE: ${new Date().toLocaleDateString()}</strong></p>
-        </div>
+  // Function to remove horizontal lines and signature sections from document content
+  const processDocumentContent = (content: string) => {
+    if (!content) return '';
+    
+    // Create a temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    // Remove signature sections
+    const signatureSections = tempDiv.querySelectorAll('.signature-block, .signatures-section');
+    signatureSections.forEach((section: Element) => section.remove());
+    
+    // Remove headings that contain "SIGNATURES" or "AGREED AND ACCEPTED"
+    const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach((heading: Element) => {
+      if (heading.textContent?.includes('SIGNATURES') || 
+          heading.textContent?.includes('AGREED AND ACCEPTED')) {
+        heading.remove();
+      }
+    });
+    
+    // Remove paragraphs containing only underscores (horizontal lines)
+    const paragraphs = tempDiv.querySelectorAll('p');
+    paragraphs.forEach((p: Element) => {
+      const text = p.textContent?.trim() || '';
+      // Check if paragraph contains only underscores, spaces, and "Date:"
+      if (text.match(/^[_\s]*$/) || 
+          text.match(/^.*_+.*Date:\s*_+.*$/) ||
+          text.match(/^_+\s*Date:\s*_+$/)) {
+        p.remove();
+      }
+    });
+    
+    return tempDiv.innerHTML;
+  };
+
+  // Process content when document changes
+  useEffect(() => {
+    if (document?.content) {
+      const processed = processDocumentContent(document.content);
+      setProcessedContent(processed);
+    }
+  }, [document]);
+
+  // Fetch document and signature request data
+  useEffect(() => {
+    const fetchDocumentData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Check if this is a token-based signing URL
+        const isToken = documentId.length > 30; // Tokens are longer than UUIDs
         
-        <p>This Exclusive Leasing Agency Agreement (the "Agreement") is made as of <strong>${new Date().toLocaleDateString()}</strong> (the "Effective Date") by and between <strong>[LANDLORD NAME]</strong> of <strong>[LANDLORD ADDRESS]</strong> ("LANDLORD") and <strong>LORNELL REAL ESTATE, LLC</strong>, of <strong>22 CHERRY STREET, SPENCER, MA 01562</strong> ("BROKER").</p>
-        
-        <p>By signing below, you acknowledge that you have read, understood, and agree to all terms and conditions set forth in this agreement.</p>
-        
-        <div style="margin-top: 60px; page-break-inside: avoid;">
-          <h2>AGREED AND ACCEPTED:</h2>
+        if (isToken) {
+          // Fetch by signing token
+          const response = await fetch(`/api/signature-requests?token=${documentId}`);
+          if (!response.ok) {
+            throw new Error('Signature request not found or expired');
+          }
           
-          <div style="display: flex; justify-content: space-between; margin-top: 40px;">
-            <div style="width: 45%;">
-              <p>____________________________</p>
-              <p id="signer-name-placeholder">[SIGNER NAME]</p>
-              <p>LANDLORD</p>
-              <p style="margin-top: 20px;">Date: <span id="signer-date-placeholder">[DATE]</span></p>
-            </div>
-            
-            <div style="width: 45%;">
-              <p>____________________________</p>
-              <p>LORNELL REAL ESTATE, LLC</p>
-              <p>BROKER</p>
-              <p style="margin-top: 20px;">Date: _______________</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    `,
-    status: 'pending_signature'
+          const data = await response.json();
+          setSignatureRequest(data.signatureRequest);
+          setDocument(data.signatureRequest.documents);
+        } else {
+          // Fetch by document ID (fallback for old URLs)
+          const response = await fetch(`/api/documents/${documentId}`);
+          if (!response.ok) {
+            throw new Error('Document not found');
+          }
+          
+          const data = await response.json();
+          setDocument(data.document);
+        }
+      } catch (error) {
+        console.error('Error fetching document:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load document');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (documentId) {
+      fetchDocumentData();
+    }
+  }, [documentId]);
+
+  const handleSignatureCapture = (signature: string, coordinates: any) => {
+    setSignatureData(signature);
+    setSignatureCoordinates(coordinates);
+    setShowSignatureCanvas(false);
   };
 
   const handleSign = async () => {
@@ -61,49 +123,91 @@ export default function DocumentSigningPage() {
       return;
     }
 
+    if (!signatureData) {
+      alert('Please provide your digital signature.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Simulate API call to record signature
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update the document content with signature details
-      const signedContent = mockDocument.content
-        .replace('[SIGNER NAME]', signerName)
-        .replace('[DATE]', signerDate);
-      
+      // Get device info for security tracking
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      };
+
+      // Save signature to database
+      const response = await fetch('/api/signatures', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          signerName,
+          signerEmail,
+          signerType: 'client',
+          signatureData,
+          signatureCoordinates,
+          deviceInfo,
+          signingSessionId: crypto.randomUUID()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save signature');
+      }
+
+      const result = await response.json();
       setIsSigned(true);
       
-      // In real implementation, this would save to database
-      console.log('Document signed:', {
-        documentId,
-        signerName,
-        signerEmail,
-        signerDate,
-        signedAt: new Date().toISOString()
-      });
+      console.log('Document signed successfully:', result);
 
     } catch (error) {
       console.error('Error signing document:', error);
-      alert('Failed to sign document. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to sign document. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDownload = () => {
-    // Create a printable version
+    if (!document) return;
+    
+    // Create a printable version with signature
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      const signedContent = mockDocument.content
-        .replace('[SIGNER NAME]', signerName)
-        .replace('[DATE]', signerDate);
+      let content = document.content || '';
+      
+      // Replace placeholders with actual values
+      content = content
+        .replace(/\[SIGNER NAME\]/g, signerName)
+        .replace(/\[DATE\]/g, signerDate);
+
+      // Add signature image if available
+      let signatureHtml = '';
+      if (signatureData) {
+        signatureHtml = `
+          <div style="margin-top: 20px;">
+            <p><strong>Digital Signature:</strong></p>
+            <img src="${signatureData}" alt="Digital Signature" style="max-width: 200px; border: 1px solid #ccc;" />
+            <p style="font-size: 10pt; color: #666;">
+              Signed on ${new Date().toLocaleString()} by ${signerName}
+            </p>
+          </div>
+        `;
+      }
 
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>${mockDocument.title} - Signed</title>
+            <title>${document.title} - Signed</title>
             <meta charset="utf-8">
             <style>
               @media print {
@@ -120,7 +224,8 @@ export default function DocumentSigningPage() {
             </style>
           </head>
           <body>
-            ${signedContent}
+            ${content}
+            ${signatureHtml}
             <script>
               window.onload = function() {
                 window.print();
@@ -133,6 +238,37 @@ export default function DocumentSigningPage() {
     }
   };
 
+  // Loading state
+  if (isLoading && !document) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading document...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="text-center p-6">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Error Loading Document</h1>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Success state
   if (isSigned) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -159,6 +295,18 @@ export default function DocumentSigningPage() {
                 </p>
               </div>
               
+              {signatureData && (
+                <div className="bg-white p-4 rounded-lg border">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Your Digital Signature:</p>
+                  <img 
+                    src={signatureData} 
+                    alt="Digital Signature" 
+                    className="mx-auto border border-gray-300 rounded"
+                    style={{ maxWidth: '200px', maxHeight: '80px' }}
+                  />
+                </div>
+              )}
+              
               <div className="flex justify-center space-x-4">
                 <Button onClick={handleDownload}>
                   <Download className="w-4 h-4 mr-2" />
@@ -179,21 +327,106 @@ export default function DocumentSigningPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Document Signing</h1>
           <p className="text-gray-600 mt-2">Please review the document below and provide your signature</p>
+          {signatureRequest && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Signing Request:</strong> {signatureRequest.request_title}
+              </p>
+              {signatureRequest.request_message && (
+                <p className="text-sm text-blue-700 mt-1">{signatureRequest.request_message}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Document Preview */}
-        <Card className="mb-6">
-          <CardHeader>
-            <h2 className="text-xl font-semibold">{mockDocument.title}</h2>
-            <p className="text-gray-600 text-sm">Please review the document carefully before signing</p>
-          </CardHeader>
-          <CardContent>
-            <div 
-              className="prose max-w-none text-sm border p-6 rounded bg-white max-h-96 overflow-y-auto"
-              dangerouslySetInnerHTML={{ __html: mockDocument.content }}
-            />
-          </CardContent>
-        </Card>
+        {document && (
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">{document.title}</h2>
+                  <p className="text-gray-600 text-sm">Please review the document carefully before signing</p>
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <Eye className="w-4 h-4 mr-1" />
+                  Document Preview
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div 
+                className="bg-white border rounded-lg overflow-y-auto document-preview-clean"
+                style={{ 
+                  maxHeight: '400px',
+                  paddingLeft: '20px',
+                  paddingRight: '20px',
+                  paddingTop: '24px',
+                  paddingBottom: '24px'
+                }}
+                dangerouslySetInnerHTML={{ 
+                  __html: processedContent || document?.content || '<p>Document content not available</p>' 
+                }}
+              />
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                  .document-preview-clean {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #000;
+                  }
+                  .document-preview-clean h1 {
+                    font-size: 24px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                    text-align: center;
+                    text-transform: none !important;
+                    border: none !important;
+                    text-decoration: none !important;
+                  }
+                  .document-preview-clean h2 {
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin: 24px 0 12px 0;
+                    text-transform: none !important;
+                    border: none !important;
+                    border-bottom: none !important;
+                    text-decoration: none !important;
+                    background: none !important;
+                  }
+                  .document-preview-clean h3 {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin: 16px 0 8px 0;
+                    text-transform: none !important;
+                    border: none !important;
+                    text-decoration: none !important;
+                  }
+                  .document-preview-clean p {
+                    margin: 0 0 16px 0;
+                    line-height: 1.6;
+                  }
+                  .document-preview-clean strong {
+                    font-weight: bold;
+                  }
+                  .document-preview-clean div {
+                    margin-bottom: 0;
+                  }
+                  /* Remove any Tailwind prose styles */
+                  .document-preview-clean h1:before,
+                  .document-preview-clean h1:after,
+                  .document-preview-clean h2:before,
+                  .document-preview-clean h2:after,
+                  .document-preview-clean h3:before,
+                  .document-preview-clean h3:after {
+                    display: none !important;
+                    content: none !important;
+                  }
+                `
+              }} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Signature Form */}
         <Card>
@@ -266,7 +499,65 @@ export default function DocumentSigningPage() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-4">
+            {/* Signature Section */}
+            <div className="border-t pt-6 mt-6">
+              <h3 className="text-lg font-semibold mb-4">Digital Signature</h3>
+              
+              {!signatureData ? (
+                !showSignatureCanvas ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                    <PenTool className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Click below to provide your digital signature</p>
+                    <Button
+                      type="button"
+                      onClick={() => setShowSignatureCanvas(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <PenTool className="w-4 h-4 mr-2" />
+                      Add Signature
+                    </Button>
+                  </div>
+                ) : (
+                  <SignatureCanvas
+                    onSignatureCapture={handleSignatureCapture}
+                    onCancel={() => setShowSignatureCanvas(false)}
+                    width={600}
+                    height={200}
+                  />
+                )
+              ) : (
+                <div className="border border-green-300 rounded-lg p-4 bg-green-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-800 font-medium">Signature Captured</p>
+                      <p className="text-green-700 text-sm">Your digital signature has been recorded</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <img 
+                        src={signatureData} 
+                        alt="Your Signature" 
+                        className="border border-gray-300 rounded bg-white"
+                        style={{ maxWidth: '150px', maxHeight: '60px' }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSignatureData(null);
+                          setSignatureCoordinates(null);
+                          setShowSignatureCanvas(false);
+                        }}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-4 mt-6">
               <Button
                 type="button"
                 variant="outline"
@@ -276,7 +567,7 @@ export default function DocumentSigningPage() {
               </Button>
               <Button
                 onClick={handleSign}
-                disabled={isLoading || !signerName || !signerEmail}
+                disabled={isLoading || !signerName || !signerEmail || !signatureData}
               >
                 {isLoading ? (
                   <>
@@ -285,8 +576,8 @@ export default function DocumentSigningPage() {
                   </>
                 ) : (
                   <>
-                    <PenTool className="w-4 h-4 mr-2" />
-                    Sign Document
+                    <Check className="w-4 h-4 mr-2" />
+                    Complete Signature
                   </>
                 )}
               </Button>

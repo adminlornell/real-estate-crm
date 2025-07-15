@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     
     // Add title
     pdf.setFontSize(20);
-    pdf.text(document.title, 20, 30);
+    pdf.text(document.title || 'Untitled Document', 20, 30);
     
     // Add content based on template
     let yPos = 50;

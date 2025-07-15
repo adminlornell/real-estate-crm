@@ -15,6 +15,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+import { makeAuthenticatedRequest } from '@/lib/api';
+import DocumentSigning from '@/components/documents/DocumentSigning';
+import { saveSignedDocument } from '@/lib/signedDocuments';
 
 const createDocumentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -35,6 +39,8 @@ export default function CreateDocumentPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [showPrintPreviewModal, setShowPrintPreviewModal] = useState(false);
   const [documentContent, setDocumentContent] = useState<string>('');
+  const [showSigningInterface, setShowSigningInterface] = useState(false);
+  const [createdDocument, setCreatedDocument] = useState<any>(null);
   
   const {
     documentTemplates,
@@ -496,6 +502,11 @@ export default function CreateDocumentPage() {
   const onSubmit = async (data: CreateDocumentData) => {
     if (!agent?.id) return;
 
+    // Map template document_type to valid values
+    const validDocumentTypes = ['contract', 'disclosure', 'inspection', 'financial', 'marketing'];
+    const templateDocType = selectedTemplate?.document_type;
+    const documentType = validDocumentTypes.includes(templateDocType) ? templateDocType : 'contract';
+
     const documentData = {
       document_name: data.title,
       template_id: data.template_id,
@@ -503,7 +514,7 @@ export default function CreateDocumentPage() {
       agent_id: agent.id,
       client_id: selectedClientId || null,
       property_id: selectedPropertyId || null,
-      document_type: selectedTemplate?.document_type || 'custom',
+      document_type: documentType,
       field_values: templateFieldValues,
       document_status: 'draft',
       file_url: '/placeholder.pdf', // Temporary placeholder URL
@@ -548,6 +559,13 @@ export default function CreateDocumentPage() {
             {/* Action Buttons */}
             {selectedTemplate && (
               <div className="flex items-center space-x-2">
+                {/* Debug info */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="text-xs text-gray-500 mr-2">
+                    Client: {selectedClientId ? 'Yes' : 'No'} | 
+                    Fields: {Object.keys(templateFieldValues).length}
+                  </div>
+                )}
                 {Object.keys(templateFieldValues).length > 0 && (
                   <>
                     <Button
@@ -591,8 +609,27 @@ export default function CreateDocumentPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        alert('Digital signing interface would open here');
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        console.log('Sign Document button clicked - no form submission should occur');
+                        
+                        if (!selectedTemplate?.id) {
+                          alert('Please select a template first.');
+                          return;
+                        }
+
+                        // Create a mock document object for signing interface
+                        const mockDocument = {
+                          id: 'preview-' + Date.now(),
+                          title: watch('title') || selectedTemplate?.name || 'Untitled Document',
+                          document_name: watch('title') || selectedTemplate?.name || 'Untitled Document'
+                        };
+
+                        console.log('Opening signing interface with mock document:', mockDocument);
+                        setCreatedDocument(mockDocument);
+                        setShowSigningInterface(true);
                       }}
                       className="cursor-pointer hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 active:bg-purple-100 transition-all duration-200"
                     >
@@ -873,6 +910,48 @@ export default function CreateDocumentPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Signing Interface */}
+      {showSigningInterface && createdDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <DocumentSigning
+              documentData={{
+                id: createdDocument.id,
+                title: createdDocument.title || createdDocument.document_name,
+                content: documentContent
+              }}
+              onSigningComplete={async (documentWithSignatures) => {
+                console.log('Document signed:', documentWithSignatures);
+                
+                try {
+                  // Save signed document to local storage (now async)
+                  const signedDoc = await saveSignedDocument({
+                    title: documentWithSignatures.title || 'Untitled Document',
+                    content: documentWithSignatures.content, // This includes the embedded signatures
+                    signedBy: documentWithSignatures.signed_by,
+                    signedAt: documentWithSignatures.signed_at,
+                    signature: JSON.stringify(documentWithSignatures.signatures), // Store all signatures
+                    signingDate: new Date().toISOString().split('T')[0],
+                    templateName: selectedTemplate?.name
+                  });
+
+                  setShowSigningInterface(false);
+                  alert('Document signed and saved successfully!');
+                  
+                  // Redirect to the signed document view
+                  router.push(`/documents/signed/${signedDoc.id}`);
+                } catch (error) {
+                  console.error('Error saving signed document:', error);
+                  alert('Document signed but failed to save. Please try again or check your browser storage.');
+                  setShowSigningInterface(false);
+                }
+              }}
+              onCancel={() => setShowSigningInterface(false)}
+            />
           </div>
         </div>
       )}

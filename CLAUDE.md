@@ -84,7 +84,7 @@ Component structure follows atomic design:
 - `src/components/clients/` - Client management components
 - `src/components/tasks/` - Task management components
 - `src/components/reports/` - Analytics and reporting
-- `src/components/documents/` - Document management components
+- `src/components/documents/` - Document management and print preview components
 - `src/components/layout/` - Layout components
 - `src/components/navigation/` - Navigation components
 
@@ -176,6 +176,18 @@ Component structure follows atomic design:
 - Document status tracking (draft, finalized) with timestamp tracking
 - Template field replacement with dynamic content rendering
 
+### Print Preview System
+- **World-class print preview** with professional document formatting (`src/components/documents/PrintPreview.tsx`)
+- **Real-time zoom controls** (25% to 200%) with keyboard shortcuts (Ctrl/Cmd + +/-)
+- **Paper size selection** (A4, Letter, Legal) with orientation toggle (Portrait/Landscape)
+- **Custom margin controls** for precise print formatting
+- **Print-optimized CSS** with proper media queries and professional typography
+- **Modal and standalone modes** - accessible via button or direct URL (`/documents/[id]/print-preview`)
+- **Keyboard navigation** support (Escape to close, Ctrl/Cmd+P to print)
+- **Settings panel** with live preview updates and reset functionality
+- **Print simulation** with accurate paper dimensions and shadow effects
+- **Mobile responsive** design that works across all screen sizes
+
 ## Testing & Quality
 
 - Run `npm run lint` before committing changes
@@ -183,6 +195,8 @@ Component structure follows atomic design:
 - Verify RLS policies work correctly in different scenarios
 - Test activity logging triggers with database operations
 - Validate form inputs and error handling
+- Test print preview functionality across different browsers and devices
+- Verify print output matches preview expectations
 
 ## Debugging & Development Tools
 
