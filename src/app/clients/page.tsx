@@ -352,7 +352,7 @@ export default function ClientsPage() {
                         size="sm" 
                         variant="outline" 
                         onClick={() => router.push(`/clients/${client.id}`)}
-                        className="flex-1 border-gray-200 text-gray-600 hover:bg-gray-50"
+                        className="flex-1 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 transition-all duration-200 hover:scale-105 hover:shadow-md"
                       >
                         View Details
                       </Button>
@@ -360,7 +360,7 @@ export default function ClientsPage() {
                         size="sm" 
                         variant="outline" 
                         onClick={() => handleEditClient(client)}
-                        className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50"
+                        className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit

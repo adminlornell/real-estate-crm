@@ -230,12 +230,12 @@ export default function AgentDashboard() {
         </Card>
 
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+          className="group cursor-pointer hover:shadow-xl hover:shadow-blue-600/10 transition-all duration-200 hover:scale-105 hover:border-blue-200"
           onClick={() => handleCardClick('/reports')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-gray-900">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-gray-600" />
+            <CardTitle className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
