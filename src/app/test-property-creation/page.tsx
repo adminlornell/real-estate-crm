@@ -33,7 +33,7 @@ export default function TestPropertyCreationPage() {
       const { data: agent, error: agentError } = await supabase
         .from('agents')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user?.id || '')
         .single()
 
       addResult('Agent Query', agent, agentError)

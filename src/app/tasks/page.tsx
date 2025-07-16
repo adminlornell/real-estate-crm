@@ -11,6 +11,7 @@ import { Database } from '@/types/database'
 import TaskTemplateManager from '@/components/tasks/TaskTemplateManager'
 import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
+import Pagination from '@/components/ui/Pagination'
 import { 
   CheckSquare, 
   Plus, 
@@ -54,12 +55,18 @@ export default function TasksPage() {
   const isHydrated = useHydration()
   const [tasks, setTasks] = useState<EnhancedTask[]>([])
   const [filteredTasks, setFilteredTasks] = useState<EnhancedTask[]>([])
+  const [paginatedTasks, setPaginatedTasks] = useState<EnhancedTask[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
   const [selectedRecency, setSelectedRecency] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [agentId, setAgentId] = useState<string>('')
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(25)
+  const [totalItems, setTotalItems] = useState(0)
   const [showTemplateManager, setShowTemplateManager] = useState(false)
   const [showCommentModal, setShowCommentModal] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -86,7 +93,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     filterTasks()
-  }, [tasks, searchTerm, selectedStatus, selectedPriority, selectedRecency])
+  }, [tasks, searchTerm, selectedStatus, selectedPriority, selectedRecency, currentPage, itemsPerPage])
 
   const fetchTasks = async () => {
     try {
@@ -101,7 +108,7 @@ export default function TasksPage() {
       const { data: agent, error: agentError } = await supabase
         .from('agents')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('user_id', user?.id || '')
         .single()
 
       console.log('Agent query result:', { agent, agentError })
@@ -226,8 +233,8 @@ export default function TasksPage() {
       const taskWithDetails: TaskWithDetails = {
         ...taskData,
         task_comments: commentsData || [],
-        client: clientData,
-        property: propertyData
+        client: clientData || undefined,
+        property: propertyData || undefined
       }
 
       setSelectedTaskDetail(taskWithDetails)
@@ -268,7 +275,7 @@ export default function TasksPage() {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
       
       filtered = filtered.filter(task => {
-        const taskDate = new Date(task.created_at)
+        const taskDate = task.created_at ? new Date(task.created_at) : new Date()
         const taskDay = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate())
         
         switch (selectedRecency) {
@@ -290,6 +297,27 @@ export default function TasksPage() {
     }
 
     setFilteredTasks(filtered)
+    
+    // Apply pagination
+    paginateTasks(filtered)
+  }
+
+  const paginateTasks = (filtered: EnhancedTask[]) => {
+    setTotalItems(filtered.length)
+    
+    // Reset to page 1 if current page would be empty
+    let pageToUse = currentPage
+    const totalPages = Math.ceil(filtered.length / itemsPerPage)
+    if (currentPage > totalPages && totalPages > 0) {
+      pageToUse = 1
+      setCurrentPage(1)
+    }
+    
+    const startIndex = (pageToUse - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const paginated = filtered.slice(startIndex, endIndex)
+    
+    setPaginatedTasks(paginated)
   }
 
   const updateTaskStatus = async (taskId: string, status: string) => {
@@ -479,6 +507,23 @@ export default function TasksPage() {
     setSelectedTaskDetail(null)
   }
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage)
+    setCurrentPage(1) // Reset to first page when changing items per page
+  }
+
+  const resetFiltersAndPagination = () => {
+    setSearchTerm('')
+    setSelectedStatus('all')
+    setSelectedPriority('all')
+    setSelectedRecency('all')
+    setCurrentPage(1)
+  }
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'bg-red-100 text-red-800 border-red-200'
@@ -642,10 +687,10 @@ export default function TasksPage() {
         {/* Results Summary */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-gray-900 font-medium">
-            Showing {filteredTasks.length} of {tasks.length} tasks
+            Showing {paginatedTasks.length} of {filteredTasks.length} tasks
             {(searchTerm || selectedStatus !== 'all' || selectedPriority !== 'all' || selectedRecency !== 'all') && (
               <span className="text-blue-600 ml-2">
-                (filtered)
+                (filtered from {tasks.length} total)
               </span>
             )}
           </p>
@@ -697,8 +742,9 @@ export default function TasksPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {filteredTasks.map((task) => (
+          <>
+            <div className="space-y-4">
+              {paginatedTasks.map((task) => (
               <Card 
                 key={task.id} 
                 className={`border-l-4 cursor-pointer hover:shadow-md transition-shadow ${isOverdue(task.due_date) && task.status !== 'completed' ? 'border-l-red-500' : 'border-l-blue-500'}`}
@@ -732,7 +778,7 @@ export default function TasksPage() {
                         </div>
                         <div className="flex items-center space-x-1">
                           <CalendarDays className="w-4 h-4 text-gray-600" />
-                          <span className="text-gray-600">Created: {formatCreatedDate(task.created_at)}</span>
+                          <span className="text-gray-600">Created: {task.created_at ? formatCreatedDate(task.created_at) : 'Unknown'}</span>
                         </div>
                         {task.task_type && (
                           <div className="flex items-center space-x-1">
@@ -805,8 +851,23 @@ export default function TasksPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            {filteredTasks.length > 0 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  className="border-t pt-6"
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -929,7 +990,7 @@ export default function TasksPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                        <p className="text-gray-800">{new Date(selectedTaskDetail.created_at).toLocaleDateString()}</p>
+                        <p className="text-gray-800">{selectedTaskDetail.created_at ? new Date(selectedTaskDetail.created_at).toLocaleDateString() : 'Unknown'}</p>
                       </div>
                     </div>
                   </div>

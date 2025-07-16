@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { 
@@ -12,6 +13,8 @@ import {
   AlertCircle, 
   Calendar, 
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Filter,
   X,
   MessageSquare,
@@ -46,6 +49,11 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
+
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed' | 'cancelled'>('all')
   const [recencyFilter, setRecencyFilter] = useState<'all' | 'today' | 'week' | 'month' | 'quarter'>('all')
 
@@ -63,28 +71,190 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
 
   useEffect(() => {
     fetchTasks()
-  }, [clientId, agentId])
+  }, [clientId, agentId, currentPage, itemsPerPage, statusFilter, recencyFilter])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle keyboard events when not in an input field
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      const totalPages = Math.ceil(totalCount / itemsPerPage)
+      
+      switch (event.key) {
+        case 'ArrowLeft':
+          if (currentPage > 1) {
+            handlePageChange(currentPage - 1)
+            event.preventDefault()
+          }
+          break
+        case 'ArrowRight':
+          if (currentPage < totalPages) {
+            handlePageChange(currentPage + 1)
+            event.preventDefault()
+          }
+          break
+        case 'Home':
+          if (currentPage !== 1) {
+            handlePageChange(1)
+            event.preventDefault()
+          }
+          break
+        case 'End':
+          if (currentPage !== totalPages) {
+            handlePageChange(totalPages)
+            event.preventDefault()
+          }
+          break
+      }
+    }
+
+    if (totalCount > itemsPerPage) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [currentPage, totalCount, itemsPerPage])
 
   const fetchTasks = async () => {
+    console.log('🔍 ClientTasks fetchTasks called with:', {
+      clientId,
+      agentId,
+      currentPage,
+      itemsPerPage,
+      statusFilter,
+      recencyFilter
+    })
+
     try {
       setIsLoading(true)
       setError(null)
 
-      const { data, error: tasksError } = await supabase
+      // Build base query
+      let query = supabase
         .from('tasks')
         .select('*')
         .eq('related_entity_type', 'client')
         .eq('related_entity_id', clientId)
+
+
+
+      // Add status filter
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter)
+        console.log('🏷️ Status filter applied:', statusFilter)
+      }
+
+      // Add recency filter
+      if (recencyFilter !== 'all') {
+        const now = new Date()
+        const filterDate = new Date()
+        
+        switch (recencyFilter) {
+          case 'today':
+            filterDate.setHours(0, 0, 0, 0)
+            break
+          case 'week':
+            filterDate.setDate(now.getDate() - 7)
+            break
+          case 'month':
+            filterDate.setMonth(now.getMonth() - 1)
+            break
+          case 'quarter':
+            filterDate.setMonth(now.getMonth() - 3)
+            break
+        }
+        
+        query = query.gte('created_at', filterDate.toISOString())
+
+      }
+
+      // Get total count for pagination
+
+      
+      // Build count query separately - use correct syntax for count-only query
+      let countQuery = supabase
+        .from('tasks')
+        .select('id', { count: 'exact', head: true })
+        .eq('related_entity_type', 'client')
+        .eq('related_entity_id', clientId)
+
+      // Apply same filters to count query
+      if (statusFilter !== 'all') {
+        countQuery = countQuery.eq('status', statusFilter)
+      }
+
+      if (recencyFilter !== 'all') {
+        const now = new Date()
+        const filterDate = new Date()
+        
+        switch (recencyFilter) {
+          case 'today':
+            filterDate.setHours(0, 0, 0, 0)
+            break
+          case 'week':
+            filterDate.setDate(now.getDate() - 7)
+            break
+          case 'month':
+            filterDate.setMonth(now.getMonth() - 1)
+            break
+          case 'quarter':
+            filterDate.setMonth(now.getMonth() - 3)
+            break
+        }
+        
+        countQuery = countQuery.gte('created_at', filterDate.toISOString())
+      }
+
+      const { count, error: countError } = await countQuery
+
+      if (countError) {
+        console.error('❌ Count query error:', countError)
+        throw countError
+      }
+
+      const finalCount = count || 0
+      setTotalCount(finalCount)
+
+      // Calculate pagination info
+      const totalPages = Math.ceil(finalCount / itemsPerPage)
+      const shouldShowPagination = totalPages > 1
+      console.log('📄 Pagination calculation:', {
+        totalCount: finalCount,
+        itemsPerPage,
+        totalPages,
+        currentPage,
+        shouldShowPagination
+      })
+
+      // Get paginated data
+      const offset = (currentPage - 1) * itemsPerPage
+      console.log('📖 Fetching paginated data with offset:', offset, 'limit:', itemsPerPage)
+      
+      const { data, error: tasksError } = await query
         .order('created_at', { ascending: false })
+        .range(offset, offset + itemsPerPage - 1)
+
+      console.log('📖 Tasks query result:', { 
+        dataLength: data?.length || 0, 
+        tasksError,
+        offset,
+        range: `${offset} to ${offset + itemsPerPage - 1}`
+      })
 
       if (tasksError) {
+        console.error('❌ Tasks query error:', tasksError)
         throw tasksError
       }
 
       setTasks(data || [])
+      console.log('✅ fetchTasks completed successfully')
     } catch (err) {
-      console.error('Error fetching tasks:', err)
+      console.error('💥 Error in fetchTasks:', err)
       setError('Failed to load tasks')
+      // Set totalCount to 0 on error to ensure pagination doesn't show
+      setTotalCount(0)
     } finally {
       setIsLoading(false)
     }
@@ -253,8 +423,8 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
       const taskWithDetails: TaskWithDetails = {
         ...taskData,
         task_comments: commentsData || [],
-        client: clientData,
-        property: propertyData
+        client: clientData || undefined,
+        property: propertyData || undefined
       }
 
       setSelectedTaskDetail(taskWithDetails)
@@ -346,45 +516,63 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
     }
   }
 
-  const getFilteredTasks = () => {
-    let filtered = tasks
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(task => task.status === statusFilter)
-    }
-
-    // Apply recency filter
-    if (recencyFilter !== 'all') {
-      const now = new Date()
-      const filterDate = new Date()
-      
-      switch (recencyFilter) {
-        case 'today':
-          filterDate.setHours(0, 0, 0, 0)
-          break
-        case 'week':
-          filterDate.setDate(now.getDate() - 7)
-          break
-        case 'month':
-          filterDate.setMonth(now.getMonth() - 1)
-          break
-        case 'quarter':
-          filterDate.setMonth(now.getMonth() - 3)
-          break
-      }
-      
-      filtered = filtered.filter(task => new Date(task.created_at) >= filterDate)
-    }
-
-    return filtered
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
-  const filteredTasks = getFilteredTasks()
-  const completedCount = tasks.filter(task => task.status === 'completed').length
-  const pendingCount = tasks.filter(task => task.status === 'pending').length
-  const inProgressCount = tasks.filter(task => task.status === 'in_progress').length
-  const cancelledCount = tasks.filter(task => task.status === 'cancelled').length
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage)
+    setCurrentPage(1) // Reset to first page when changing items per page
+  }
+
+  // Reset to first page when filters change
+  const handleStatusFilterChange = (newStatus: typeof statusFilter) => {
+    setStatusFilter(newStatus)
+    setCurrentPage(1)
+  }
+
+  const handleRecencyFilterChange = (newRecency: typeof recencyFilter) => {
+    setRecencyFilter(newRecency)
+    setCurrentPage(1)
+  }
+
+  // Task counts for summary (fetch all tasks for this client to get accurate counts)
+  const [taskCounts, setTaskCounts] = useState({
+    completed: 0,
+    pending: 0,
+    inProgress: 0,
+    cancelled: 0,
+    total: 0
+  })
+
+  // Fetch task counts separately
+  useEffect(() => {
+    const fetchTaskCounts = async () => {
+      try {
+        const { data: allTasks } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('related_entity_type', 'client')
+          .eq('related_entity_id', clientId)
+
+        if (allTasks) {
+          const counts = {
+            completed: allTasks.filter(task => task.status === 'completed').length,
+            pending: allTasks.filter(task => task.status === 'pending').length,
+            inProgress: allTasks.filter(task => task.status === 'in_progress').length,
+            cancelled: allTasks.filter(task => task.status === 'cancelled').length,
+            total: allTasks.length
+          }
+          setTaskCounts(counts)
+        }
+      } catch (err) {
+        console.error('Error fetching task counts:', err)
+      }
+    }
+
+    fetchTaskCounts()
+  }, [clientId])
 
   if (isLoading) {
     return (
@@ -413,7 +601,7 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-normal text-gray-600">
-                ({tasks.length} total)
+                ({taskCounts.total} total)
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -421,7 +609,7 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
                 <Filter className="w-4 h-4 text-gray-500" />
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                  onChange={(e) => handleStatusFilterChange(e.target.value as typeof statusFilter)}
                   className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white hover:border-gray-400 focus:border-blue-500 focus:outline-none"
                 >
                   <option value="all">All Status</option>
@@ -435,7 +623,7 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
                 <Filter className="w-4 h-4 text-gray-500" />
                 <select
                   value={recencyFilter}
-                  onChange={(e) => setRecencyFilter(e.target.value as typeof recencyFilter)}
+                  onChange={(e) => handleRecencyFilterChange(e.target.value as typeof recencyFilter)}
                   className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white hover:border-gray-400 focus:border-blue-500 focus:outline-none"
                 >
                   <option value="all">All Time</option>
@@ -450,8 +638,8 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setStatusFilter('all')
-                    setRecencyFilter('all')
+                    handleStatusFilterChange('all')
+                    handleRecencyFilterChange('all')
                   }}
                   className="flex items-center space-x-1 text-gray-500 hover:text-gray-700"
                 >
@@ -467,19 +655,19 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">{pendingCount} Pending</span>
+                <span className="text-sm text-gray-600">{taskCounts.pending} Pending</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">{inProgressCount} In Progress</span>
+                <span className="text-sm text-gray-600">{taskCounts.inProgress} In Progress</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">{completedCount} Completed</span>
+                <span className="text-sm text-gray-600">{taskCounts.completed} Completed</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">{cancelledCount} Cancelled</span>
+                <span className="text-sm text-gray-600">{taskCounts.cancelled} Cancelled</span>
               </div>
             </div>
             {(statusFilter !== 'all' || recencyFilter !== 'all') && (
@@ -491,19 +679,20 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
         </div>
         
         <div>
-          {filteredTasks.length === 0 ? (
+          {tasks.length === 0 ? (
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">
-                {tasks.length === 0 
+                {totalCount === 0 
                   ? `No tasks found for ${clientName}`
                   : `No tasks found with current filters`
                 }
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredTasks.map((task) => (
+            <>
+              <div className="space-y-4">
+                {tasks.map((task) => (
                 <div
                   key={task.id}
                   className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -549,7 +738,7 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
                           </div>
                         )}
                         <div className="flex items-center space-x-1">
-                          <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+                          <span>Created: {task.created_at ? new Date(task.created_at).toLocaleDateString() : 'Unknown'}</span>
                         </div>
                       </div>
                     </div>
@@ -636,7 +825,83 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+              
+
+              {/* Navigation Buttons - Simplified Logic */}
+              {Math.ceil(totalCount / itemsPerPage) > 1 && !isLoading && !error && (
+                <div className="mt-6 mb-4 flex justify-center items-center gap-3 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 px-4 py-2 text-blue-700 border-blue-400 hover:bg-blue-100 font-medium"
+                    title="First page (Home key)"
+                  >
+                    First
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-2 px-4 py-2 text-blue-700 border-blue-400 hover:bg-blue-100 font-medium"
+                    title="Previous page (← key)"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </Button>
+                  
+                  <div className="text-sm text-blue-800 font-semibold px-6 py-2 bg-white border-2 border-blue-300 rounded-md shadow-sm">
+                    Page {currentPage} of {Math.ceil(totalCount / itemsPerPage)}
+                    <div className="text-xs text-blue-600 mt-1">← → Keys to navigate</div>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === Math.ceil(totalCount / itemsPerPage)}
+                    className="flex items-center gap-2 px-4 py-2 text-blue-700 border-blue-400 hover:bg-blue-100 font-medium"
+                    title="Next page (→ key)"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(Math.ceil(totalCount / itemsPerPage))}
+                    disabled={currentPage === Math.ceil(totalCount / itemsPerPage)}
+                    className="flex items-center gap-1 px-4 py-2 text-blue-700 border-blue-400 hover:bg-blue-100 font-medium"
+                    title="Last page (End key)"
+                  >
+                    Last
+                  </Button>
+                </div>
+              )}
+
+              {/* Items per page selector - only show when there are multiple pages */}
+              {Math.ceil(totalCount / itemsPerPage) > 1 && !isLoading && !error && (
+                <div className="mt-4 flex justify-center">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Items per page:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                      className="border border-gray-300 rounded px-2 py-1 bg-white"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="ml-4">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} tasks
+                    </span>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -770,7 +1035,7 @@ export default function ClientTasks({ clientId, agentId, clientName }: ClientTas
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                        <p className="text-gray-800">{new Date(selectedTaskDetail.created_at).toLocaleDateString()}</p>
+                        <p className="text-gray-800">{selectedTaskDetail.created_at ? new Date(selectedTaskDetail.created_at).toLocaleDateString() : 'Unknown'}</p>
                       </div>
                     </div>
                   </div>

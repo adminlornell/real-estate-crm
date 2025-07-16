@@ -100,7 +100,7 @@ export default function DocumentTemplatesPage() {
                   
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-gray-500">
-                      {template.template_fields?.length || 0} fields
+                      {Array.isArray(template.template_fields) ? template.template_fields.length : 0} fields
                     </div>
                     <Link href={`/documents/create?template=${template.id}`}>
                       <Button size="sm">
