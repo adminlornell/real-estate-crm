@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useAutoSave } from '@/hooks/useAutoSave'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
+import { showToast } from '@/lib/toast'
 
 type PropertyInsert = Database['public']['Tables']['properties']['Insert']
 type Property = Database['public']['Tables']['properties']['Row']
@@ -95,6 +97,20 @@ export default function PropertyForm({ onClose, onSuccess, initialData }: Proper
     mls_number: initialData?.mls_number || '',
     description: initialData?.description || '',
     assigned_agent_id: initialData?.assigned_agent_id || '',
+  })
+
+  // Auto-save functionality
+  const autoSaveKey = isEditing ? `property_edit_${initialData?.id}` : 'property_new'
+  const { clearSavedData, hasSavedData } = useAutoSave({
+    key: autoSaveKey,
+    data: formData,
+    enabled: !isEditing, // Only auto-save for new properties
+    onRestore: (savedData) => {
+      if (!isEditing && savedData) {
+        setFormData(savedData)
+        showToast.success('Draft restored from auto-save')
+      }
+    },
   })
 
   useEffect(() => {
@@ -257,6 +273,7 @@ export default function PropertyForm({ onClose, onSuccess, initialData }: Proper
       }
       
       if (result) {
+        clearSavedData() // Clear auto-saved data on successful submission
         onSuccess()
         onClose()
       } else {

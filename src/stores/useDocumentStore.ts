@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/database';
+import { showToast } from '@/lib/toast';
 
 type Document = Database['public']['Tables']['documents']['Row'];
 type DocumentTemplate = Database['public']['Tables']['document_templates']['Row'];
@@ -145,6 +146,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         documents: [data, ...state.documents]
       }));
 
+      showToast.success('Document created successfully!')
       return data;
     } catch (error) {
       console.error('Error creating document:', error);
@@ -160,6 +162,8 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         });
       }
       
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create document'
+      showToast.error(errorMessage)
       throw error; // Re-throw so the UI can handle it
     }
   },
@@ -181,8 +185,12 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
           doc.id === id ? { ...doc, ...data } : doc
         )
       }));
+      
+      showToast.success('Document updated successfully!')
     } catch (error) {
       console.error('Error updating document:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update document'
+      showToast.error(errorMessage)
     }
   },
 
@@ -199,8 +207,12 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       set((state) => ({
         documents: state.documents.filter((doc) => doc.id !== id)
       }));
+      
+      showToast.success('Document deleted successfully!')
     } catch (error) {
       console.error('Error deleting document:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete document'
+      showToast.error(errorMessage)
     }
   }
 }));

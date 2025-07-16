@@ -7,7 +7,7 @@
         "@modelcontextprotocol/server-filesystem"
       ],
       "env": {
-        "FILESYSTEM_ALLOWED_DIRECTORIES": "/Users/flyn/New CRM Clone/real-estate-crm"
+        "FILESYSTEM_ALLOWED_DIRECTORIES": "/Users/flyn/New\\ CRM\\ Clone/real-estate-crm"
       }
     },
     "git": {
@@ -17,7 +17,7 @@
         "@modelcontextprotocol/server-git"
       ],
       "env": {
-        "GIT_REPOSITORY_PATH": "/Users/flyn/New CRM Clone/real-estate-crm"
+        "GIT_REPOSITORY_PATH": "/Users/flyn/New\\ CRM\\ Clone/real-estate-crm"
       }
     },
     "typescript": {
@@ -27,7 +27,7 @@
         "@modelcontextprotocol/server-typescript"
       ],
       "env": {
-        "TS_CONFIG_PATH": "/Users/flyn/New CRM Clone/real-estate-crm/tsconfig.json"
+        "TS_CONFIG_PATH": "/Users/flyn/New\\ CRM\\ Clone/real-estate-crm/tsconfig.json"
       }
     },
     "postgres": {
@@ -37,7 +37,7 @@
         "@modelcontextprotocol/server-postgres"
       ],
       "env": {
-        "POSTGRES_CONNECTION_STRING": "postgresql://postgres:[password]@db.hcpdfhwkvjzeqipyqebb.supabase.co:5432/postgres"
+        "POSTGRES_CONNECTION_STRING": "postgresql://postgres.hcpdfhwkvjzeqipyqebb:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjcGRmaHdrdmp6ZXFpcHlxZWJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjE1MzE2NSwiZXhwIjoyMDY3NzI5MTY1fQ.OqxMg2MFyG4AwDEWKPV3b1WdkaResLfWdTiyyWTd6Jk@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
       }
     },
     "pdf": {
@@ -47,7 +47,7 @@
         "@modelcontextprotocol/server-pdf"
       ],
       "env": {
-        "PDF_WORKSPACE": "/Users/flyn/New CRM Clone/real-estate-crm/public"
+        "PDF_WORKSPACE": "/Users/flyn/New\\ CRM\\ Clone/real-estate-crm/public"
       }
     },
     "search": {
@@ -57,7 +57,7 @@
         "@modelcontextprotocol/server-search"
       ],
       "env": {
-        "SEARCH_INDEX_PATH": "/Users/flyn/New CRM Clone/real-estate-crm/.search-index"
+        "SEARCH_INDEX_PATH": "/Users/flyn/New\\ CRM\\ Clone/real-estate-crm/.search-index"
       }
     }
   }

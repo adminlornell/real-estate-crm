@@ -364,97 +364,113 @@ export default function DocumentViewPage() {
       <style jsx global>{`
         .document-content {
           font-family: 'Times New Roman', serif;
-          line-height: 1.8;
-          color: #111827;
+          line-height: 1.6;
+          color: #000;
           font-size: 1rem;
         }
         
         .document-content h1 {
           text-align: center;
-          font-size: 1.75rem;
-          font-weight: 900;
-          margin-bottom: 2.5rem;
-          text-transform: uppercase;
-          color: #000000;
-          letter-spacing: 0.05em;
-          border-bottom: 3px solid #000000;
-          padding-bottom: 1rem;
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 1.5rem;
+          color: #000;
         }
         
         .document-content h2 {
-          font-size: 1.375rem;
-          font-weight: 800;
-          margin-top: 2.5rem;
-          margin-bottom: 1.25rem;
-          text-transform: uppercase;
-          color: #000000;
-          letter-spacing: 0.025em;
-          border-bottom: 2px solid #374151;
-          padding-bottom: 0.5rem;
+          font-size: 1.25rem;
+          font-weight: bold;
+          margin-top: 1.5rem;
+          margin-bottom: 1rem;
+          color: #000;
         }
         
         .document-content h3 {
           font-size: 1.125rem;
-          font-weight: 700;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-          color: #000000;
-          text-decoration: underline;
+          font-weight: bold;
+          margin-top: 1.25rem;
+          margin-bottom: 0.75rem;
+          color: #000;
         }
         
         .document-content p {
-          margin-bottom: 1rem;
-          font-weight: 500;
-          color: #111827;
+          margin-bottom: 0.75rem;
+          color: #000;
+          text-align: justify;
         }
         
         .document-content strong {
-          font-weight: 800;
-          color: #000000;
-        }
-        
-        .document-content .signature-block {
-          margin-top: 3rem;
-          margin-bottom: 1.5rem;
-          padding: 1rem;
-          border: 2px solid #374151;
-          background-color: #f9fafb;
-        }
-        
-        .document-content .property-section,
-        .document-content .parties-section,
-        .document-content .terms-section,
-        .document-content .signatures-section {
-          margin-bottom: 3rem;
-          padding: 1.5rem;
-          border: 1px solid #d1d5db;
-          border-radius: 0.5rem;
-          background-color: #ffffff;
+          font-weight: bold;
         }
         
         .document-content table {
           border-collapse: collapse;
           width: 100%;
-          margin-top: 2rem;
+          margin: 1rem 0;
         }
         
-        .document-content td {
-          padding: 1rem;
-          border: 2px solid #374151;
+        .document-content td, 
+        .document-content th {
+          border: 1pt solid #000;
+          padding: 0.5rem;
+          text-align: left;
+        }
+        
+        .document-content .signature-container {
+          margin: 2rem 0;
+          display: block;
+          width: 100%;
+          clear: both;
+        }
+        
+        .document-content .signature-container .end-signature-signed {
+          display: inline-block;
+          width: 45%;
           vertical-align: top;
+          margin-right: 5%;
+          box-sizing: border-box;
         }
         
-        .document-content .document-container {
-          background-color: #ffffff;
-          padding: 2rem;
-          border: 3px solid #000000;
-          border-radius: 0.5rem;
+        .document-content .signature-container .end-signature-signed:last-child,
+        .document-content .signature-container .end-signature-signed:nth-child(2) {
+          margin-right: 0;
         }
         
         @media print {
           .document-content {
             font-size: 12pt;
-            line-height: 1.6;
+            line-height: 1.4;
+            color: black;
+          }
+          
+          .document-content h1 {
+            font-size: 18pt;
+            margin-bottom: 20pt;
+            page-break-after: avoid;
+          }
+          
+          .document-content h2 {
+            font-size: 14pt;
+            margin-top: 20pt;
+            margin-bottom: 10pt;
+            page-break-after: avoid;
+          }
+          
+          .document-content h3 {
+            font-size: 12pt;
+            margin-top: 15pt;
+            margin-bottom: 8pt;
+            page-break-after: avoid;
+          }
+          
+          .document-content p {
+            margin-bottom: 8pt;
+            orphans: 3;
+            widows: 3;
+          }
+          
+          .document-content table {
+            page-break-inside: avoid;
           }
         }
       `}</style>

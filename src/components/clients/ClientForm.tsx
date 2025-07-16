@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { useAutoSave } from '@/hooks/useAutoSave'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
+import { showToast } from '@/lib/toast'
 import { X, Save, User, Mail, Phone, MapPin, DollarSign, Tag, Calendar } from 'lucide-react'
 
 type Client = Database['public']['Tables']['clients']['Row']
@@ -59,6 +61,21 @@ export default function ClientForm({ client, onSave, onCancel, agentId }: Client
   const [newTag, setNewTag] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Auto-save functionality
+  const isEditing = !!client
+  const autoSaveKey = isEditing ? `client_edit_${client?.id}` : 'client_new'
+  const { clearSavedData, hasSavedData } = useAutoSave({
+    key: autoSaveKey,
+    data: formData,
+    enabled: !isEditing, // Only auto-save for new clients
+    onRestore: (savedData) => {
+      if (!isEditing && savedData) {
+        setFormData(savedData)
+        showToast.success('Draft restored from auto-save')
+      }
+    },
+  })
 
   const handleInputChange = (field: keyof ClientFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -170,6 +187,7 @@ export default function ClientForm({ client, onSave, onCancel, agentId }: Client
         throw result.error
       }
 
+      clearSavedData() // Clear auto-saved data on successful submission
       onSave(result.data)
     } catch (error) {
       console.error('Error saving client:', error)

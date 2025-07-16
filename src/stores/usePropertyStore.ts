@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
+import { showToast } from '@/lib/toast'
 
 type Property = Database['public']['Tables']['properties']['Row']
 type PropertyInsert = Database['public']['Tables']['properties']['Insert']
@@ -95,10 +96,12 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
 
       set({ properties: data || [], loading: false })
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch properties'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to fetch properties',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
     }
   },
 
@@ -127,13 +130,16 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
         loading: false
       }))
 
+      showToast.success('Property created successfully!')
       return data
     } catch (error) {
       console.error('PropertyStore: Create property error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create property'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to create property',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
       return null
     }
   },
@@ -157,12 +163,15 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
         loading: false
       }))
 
+      showToast.success('Property updated successfully!')
       return data
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update property'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to update property',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
       return null
     }
   },
@@ -184,12 +193,15 @@ export const usePropertyStore = create<PropertyStore>((set, get) => ({
         loading: false
       }))
 
+      showToast.success('Property deleted successfully!')
       return true
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete property'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete property',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
       return false
     }
   },

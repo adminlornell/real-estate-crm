@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../styles/globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ClientLayout from "@/components/layout/ClientLayout";
-import ErrorBoundary from "@/components/layout/ErrorBoundary";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -16,6 +13,8 @@ export const metadata: Metadata = {
   description: "Comprehensive real estate customer relationship management system",
 };
 
+import SafeRootLayout from "@/components/layout/SafeRootLayout";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,13 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ErrorBoundary>
-          <AuthProvider>
-            <ClientLayout>
-              {children}
-            </ClientLayout>
-          </AuthProvider>
-        </ErrorBoundary>
+        <SafeRootLayout>
+          {children}
+        </SafeRootLayout>
       </body>
     </html>
   );

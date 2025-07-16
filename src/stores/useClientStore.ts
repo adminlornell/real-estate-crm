@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
+import { showToast } from '@/lib/toast'
 
 type Client = Database['public']['Tables']['clients']['Row']
 type ClientInsert = Database['public']['Tables']['clients']['Insert']
@@ -72,10 +73,12 @@ export const useClientStore = create<ClientStore>((set, get) => ({
       set({ clients: data || [], loading: false })
     } catch (error) {
       console.error('ClientStore: Error fetching clients:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch clients'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to fetch clients',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
     }
   },
 
@@ -96,12 +99,15 @@ export const useClientStore = create<ClientStore>((set, get) => ({
         loading: false
       }))
 
+      showToast.success('Client created successfully!')
       return data
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create client'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to create client',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
       return null
     }
   },
@@ -125,12 +131,15 @@ export const useClientStore = create<ClientStore>((set, get) => ({
         loading: false
       }))
 
+      showToast.success('Client updated successfully!')
       return data
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update client'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to update client',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
       return null
     }
   },
@@ -152,12 +161,15 @@ export const useClientStore = create<ClientStore>((set, get) => ({
         loading: false
       }))
 
+      showToast.success('Client deleted successfully!')
       return true
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete client'
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete client',
+        error: errorMessage,
         loading: false 
       })
+      showToast.error(errorMessage)
       return false
     }
   },

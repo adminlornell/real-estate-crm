@@ -9,6 +9,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Database } from '@/types/database'
 import { Home, Users, Calendar, TrendingUp, DollarSign, Phone, MapPin, Mail, Building } from 'lucide-react'
 import RecentActivities from './RecentActivities'
+import GlobalSearch from '@/components/ui/GlobalSearch'
+import { usePropertyStore } from '@/stores/usePropertyStore'
+import { useClientStore } from '@/stores/useClientStore'
+import { useDocumentStore } from '@/stores/useDocumentStore'
 
 type Property = Database['public']['Tables']['properties']['Row']
 type Client = Database['public']['Tables']['clients']['Row']
@@ -26,6 +30,9 @@ interface DashboardStats {
 export default function AgentDashboard() {
   const { user } = useAuth()
   const router = useRouter()
+  const { fetchProperties } = usePropertyStore()
+  const { fetchClients } = useClientStore()
+  const { fetchDocuments } = useDocumentStore()
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     activeProperties: 0,
@@ -42,7 +49,7 @@ export default function AgentDashboard() {
     if (user) {
       fetchDashboardData()
     }
-  }, [user])
+  }, [user, fetchProperties, fetchClients, fetchDocuments])
 
   const fetchDashboardData = async () => {
     try {
@@ -62,6 +69,13 @@ export default function AgentDashboard() {
         .single()
 
       if (!agent) return
+
+      // Load store data for GlobalSearch functionality
+      await Promise.all([
+        fetchProperties(agent.id),
+        fetchClients(agent.id),
+        fetchDocuments(agent.id)
+      ])
 
       // Fetch properties
       const { data: properties } = await supabase
@@ -144,6 +158,11 @@ export default function AgentDashboard() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Global Search */}
+      <div className="w-full max-w-2xl mx-auto">
+        <GlobalSearch />
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card 
