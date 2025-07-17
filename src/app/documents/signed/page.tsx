@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ArrowLeft, FileText, Calendar, User, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { getSignedDocuments, deleteSignedDocument, SignedDocument } from '@/lib/signedDocuments';

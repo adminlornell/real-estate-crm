@@ -4,7 +4,7 @@ import ErrorBoundary from '@/components/layout/ErrorBoundary'
 import NoSSR from '@/components/layout/NoSSR'
 import { AuthProvider } from '@/contexts/AuthContext'
 import ClientLayout from '@/components/layout/ClientLayout'
-import { Toaster } from 'react-hot-toast'
+import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/hooks/useTheme'
 
 interface SafeRootLayoutProps {

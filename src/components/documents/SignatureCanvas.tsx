@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { RotateCcw, Check, X } from 'lucide-react';
 
 interface SignatureCanvasProps {

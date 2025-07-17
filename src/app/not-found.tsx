@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Home, ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {

@@ -37,7 +37,7 @@
         "@modelcontextprotocol/server-postgres"
       ],
       "env": {
-        "POSTGRES_CONNECTION_STRING": "postgresql://postgres.hcpdfhwkvjzeqipyqebb:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjcGRmaHdrdmp6ZXFpcHlxZWJiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjE1MzE2NSwiZXhwIjoyMDY3NzI5MTY1fQ.OqxMg2MFyG4AwDEWKPV3b1WdkaResLfWdTiyyWTd6Jk@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+        "POSTGRES_CONNECTION_STRING": ""
       }
     },
     "pdf": {
@@ -59,6 +59,14 @@
       "env": {
         "SEARCH_INDEX_PATH": "/Users/flyn/New\\ CRM\\ Clone/real-estate-crm/.search-index"
       }
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-shadcn"
+      ],
+      "env": {}
     }
   }
 }
