@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, use, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +16,6 @@ import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
 import BackNavigation from '@/components/navigation/BackNavigation'
 import { 
-  ArrowLeft, 
   Edit, 
   Phone, 
   Mail, 
@@ -25,7 +24,6 @@ import {
   Calendar,
   User,
   DollarSign,
-  Tag,
   Building,
   Heart,
   ChevronDown,
@@ -61,13 +59,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
     }
   }, [user, loading, router])
 
-  useEffect(() => {
-    if (user && id) {
-      fetchClient()
-    }
-  }, [user, id])
-
-  const fetchClient = async () => {
+  const fetchClient = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
@@ -106,7 +98,13 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user, id])
+
+  useEffect(() => {
+    if (user && id) {
+      fetchClient()
+    }
+  }, [user, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getClientTypeIcon = (type: string) => {
     switch (type) {
@@ -285,7 +283,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-lg font-bold text-gray-900">
-                    ${(client.budget_range as any).min?.toLocaleString() || 'N/A'} - ${(client.budget_range as any).max?.toLocaleString() || 'N/A'}
+                    ${(client.budget_range as { min?: number; max?: number }).min?.toLocaleString() || 'N/A'} - ${(client.budget_range as { min?: number; max?: number }).max?.toLocaleString() || 'N/A'}
                   </div>
                 </CardContent>
               </Card>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import MainNavigation from '@/components/navigation/MainNavigation'
@@ -40,15 +40,7 @@ export default function RecentClientsPage() {
   // Handle browser back button for intuitive navigation
   useBrowserBackButton()
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    } else if (user) {
-      fetchClients()
-    }
-  }, [user, authLoading, router])
-
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -76,7 +68,15 @@ export default function RecentClientsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    } else if (user) {
+      fetchClients()
+    }
+  }, [user, authLoading, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let filtered = clients

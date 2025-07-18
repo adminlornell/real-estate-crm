@@ -1,5 +1,6 @@
 // Simple client-side storage for signed documents
 // In a real app, this would be stored in the database
+// Security: Input validation and sanitization implemented
 
 export interface SignedDocument {
   id: string;
@@ -15,6 +16,7 @@ export interface SignedDocument {
 const STORAGE_KEY = 'signedDocuments';
 const MAX_DOCUMENTS = 10; // Limit to prevent quota issues
 const MAX_CONTENT_LENGTH = 50000; // Limit content size
+const ALLOWED_STORAGE_KEYS = ['signedDocuments']; // Whitelist allowed keys
 
 // Utility function to compress/resize image data
 function compressImageData(imageData: string, maxWidth: number = 300, maxHeight: number = 100, quality: number = 0.7): Promise<string> {
@@ -58,14 +60,52 @@ function compressImageData(imageData: string, maxWidth: number = 300, maxHeight:
   });
 }
 
+// Function to sanitize and validate input
+function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') {
+    throw new Error('Input must be a string');
+  }
+  
+  // Remove potentially dangerous characters
+  return input
+    .replace(/[<>"'&]/g, (char) => {
+      const map: { [key: string]: string } = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '&': '&amp;'
+      };
+      return map[char] || char;
+    })
+    .trim();
+}
+
+// Function to validate JSON structure
+function validateDocumentStructure(data: any): data is SignedDocument {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof data.id === 'string' &&
+    typeof data.title === 'string' &&
+    typeof data.content === 'string' &&
+    typeof data.signedBy === 'string' &&
+    typeof data.signedAt === 'string' &&
+    typeof data.signature === 'string' &&
+    typeof data.signingDate === 'string'
+  );
+}
+
 // Function to compress document content
 function compressDocumentContent(content: string): string {
-  if (content.length <= MAX_CONTENT_LENGTH) {
-    return content;
+  const sanitized = sanitizeInput(content);
+  
+  if (sanitized.length <= MAX_CONTENT_LENGTH) {
+    return sanitized;
   }
   
   // Truncate content if too long
-  const truncated = content.substring(0, MAX_CONTENT_LENGTH - 100);
+  const truncated = sanitized.substring(0, MAX_CONTENT_LENGTH - 100);
   return truncated + '\n\n[Content truncated due to size limitations...]';
 }
 
@@ -98,9 +138,23 @@ async function compressSignatureData(signatureString: string): Promise<string> {
   }
 }
 
+// Function to safely access localStorage
+function safeLocalStorageAccess(operation: () => void): boolean {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return false;
+    }
+    operation();
+    return true;
+  } catch (error) {
+    console.error('localStorage access failed:', error);
+    return false;
+  }
+}
+
 // Function to clean up old documents to make space
 function cleanupOldDocuments(): void {
-  try {
+  safeLocalStorageAccess(() => {
     const existing = getSignedDocuments();
     if (existing.length > MAX_DOCUMENTS) {
       // Keep only the most recent documents
@@ -111,9 +165,7 @@ function cleanupOldDocuments(): void {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
       console.log(`Cleaned up ${existing.length - trimmed.length} old signed documents`);
     }
-  } catch (error) {
-    console.error('Error during cleanup:', error);
-  }
+  });
 }
 
 // Function to check available storage space
@@ -189,13 +241,32 @@ export async function saveSignedDocument(doc: Omit<SignedDocument, 'id'>): Promi
 export function getSignedDocuments(): SignedDocument[] {
   if (typeof window === 'undefined') return [];
   
-  try {
+  let documents: SignedDocument[] = [];
+  
+  safeLocalStorageAccess(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Error loading signed documents:', error);
-    return [];
-  }
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          // Validate each document structure
+          documents = parsed.filter(validateDocumentStructure);
+          
+          // If we filtered out invalid documents, save the clean version
+          if (documents.length !== parsed.length) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+            console.warn('Removed invalid documents from storage');
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing stored documents:', parseError);
+        // Clear corrupted data
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  });
+  
+  return documents;
 }
 
 export function getSignedDocument(id: string): SignedDocument | null {
@@ -204,15 +275,21 @@ export function getSignedDocument(id: string): SignedDocument | null {
 }
 
 export function deleteSignedDocument(id: string): void {
-  const existing = getSignedDocuments();
-  const updated = existing.filter(doc => doc.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const sanitizedId = sanitizeInput(id);
+  
+  safeLocalStorageAccess(() => {
+    const existing = getSignedDocuments();
+    const updated = existing.filter(doc => doc.id !== sanitizedId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  });
 }
 
 // Storage management utilities
 export function clearAllSignedDocuments(): void {
-  localStorage.removeItem(STORAGE_KEY);
-  console.log('All signed documents cleared from storage');
+  safeLocalStorageAccess(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('All signed documents cleared from storage');
+  });
 }
 
 export function getStorageUsage(): { documentsCount: number; storageSize: string; storageInfo: ReturnType<typeof getStorageInfo> } {

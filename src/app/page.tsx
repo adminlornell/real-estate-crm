@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { PageErrorBoundary } from '@/components/error/withErrorBoundary'
 
-export default function Home() {
+function HomePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -37,5 +38,13 @@ export default function Home() {
         <p className="text-gray-600">Loading...</p>
       </div>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <PageErrorBoundary>
+      <HomePage />
+    </PageErrorBoundary>
   )
 }

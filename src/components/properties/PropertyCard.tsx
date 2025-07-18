@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { Database } from '@/types/database'
 import { MapPin, Bed, Bath, Square, Calendar, Eye } from 'lucide-react'
+import Image from 'next/image'
 
 type Property = Database['public']['Tables']['properties']['Row']
 
@@ -22,10 +23,12 @@ export default function PropertyCard({ property, onView, onEdit, onDelete }: Pro
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="aspect-video bg-gray-200 relative">
         {photos.length > 0 ? (
-          <img 
+          <Image 
             src={photos[0]} 
             alt={property.address}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">

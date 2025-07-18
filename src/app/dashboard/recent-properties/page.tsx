@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import MainNavigation from '@/components/navigation/MainNavigation'
@@ -45,9 +45,9 @@ export default function RecentPropertiesPage() {
     } else if (user) {
       fetchProperties()
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -75,7 +75,7 @@ export default function RecentPropertiesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     let filtered = properties

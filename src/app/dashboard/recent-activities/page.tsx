@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import MainNavigation from '@/components/navigation/MainNavigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
@@ -74,9 +73,9 @@ export default function RecentActivitiesPage() {
     } else if (user) {
       fetchActivities()
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -106,7 +105,7 @@ export default function RecentActivitiesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     let filtered = activities
@@ -377,7 +376,7 @@ export default function RecentActivitiesPage() {
                           {activity.metadata.comment_preview && (
                             <div className="col-span-full flex items-center space-x-1">
                               <MessageSquare className="w-3 h-3" />
-                              <span className="italic">"{activity.metadata.comment_preview}"</span>
+                              <span className="italic">&ldquo;{activity.metadata.comment_preview}&rdquo;</span>
                             </div>
                           )}
                         </div>

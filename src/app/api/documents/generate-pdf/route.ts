@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import jsPDF from 'jspdf';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
+// Note: @react-pdf/renderer imports removed as they're not used in this implementation
 import { reportAPIError, measurePerformance, addBreadcrumb } from '@/lib/sentry';
 
 export async function POST(request: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Generate PDF content
-      const pdfContent = generatePDFContent(document);
+      // const pdfContent = generatePDFContent(document); // Commented out - not used in current implementation
       
       // Create PDF using jsPDF (simpler approach for now)
       const pdf = new jsPDF();
@@ -57,10 +57,12 @@ export async function POST(request: NextRequest) {
       const lineHeight = 10;
       
       // Parse field values and add to PDF
-      const fieldValues = document.field_values as Record<string, any>;
-      const templateFields = (document.document_templates as any)?.template_fields || [];
+      const fieldValues = document.field_values as Record<string, string>;
+      const templateFields = Array.isArray(document.document_templates?.template_fields) 
+        ? document.document_templates.template_fields as Array<{ name: string; label: string; type: string }>
+        : [];
       
-      templateFields.forEach((field: any) => {
+      templateFields.forEach((field: { name: string; label: string; type: string }) => {
         const value = fieldValues[field.name] || '';
         pdf.setFontSize(12);
         pdf.text(`${field.label}: ${value}`, 20, yPos);
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
       addBreadcrumb('Uploading PDF to storage', 'api', 'info', { fileName });
       
       // Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(fileName, pdfBlob, {
           contentType: 'application/pdf',
@@ -155,7 +157,17 @@ export async function POST(request: NextRequest) {
   });
 }
 
-function generatePDFContent(document: any) {
+interface DocumentData {
+  title: string;
+  field_values: Record<string, string>;
+  document_templates: {
+    template_fields: Array<{ name: string; label: string; type: string }>;
+    name: string;
+    template_content?: string;
+  };
+}
+
+function generatePDFContent(document: DocumentData) {
   const template = document.document_templates;
   const fieldValues = document.field_values;
   

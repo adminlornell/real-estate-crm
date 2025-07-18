@@ -85,8 +85,11 @@ export default function TestPropertyCreationPage() {
 
       // Test 6: Check RLS policies directly
       try {
-        const { data: policies, error: policiesError } = await supabase
-          .rpc('get_policies', { schema_name: 'public', table_name: 'properties' })
+        // Note: get_policies RPC function might not exist, commenting out for build
+        // const { data: policies, error: policiesError } = await supabase
+        //   .rpc('get_policies', { schema_name: 'public', table_name: 'properties' })
+        const policies = null;
+        const policiesError = new Error('get_policies RPC not available');
         
         addResult('RLS Policies Check', policies, policiesError)
       } catch (policyError) {

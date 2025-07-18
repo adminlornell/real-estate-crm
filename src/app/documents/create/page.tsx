@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import DocumentSigning from '@/components/documents/DocumentSigning';
 import { saveSignedDocument } from '@/lib/signedDocuments';
+import { PageErrorBoundary } from '@/components/error/withErrorBoundary';
 
 const createDocumentSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -28,7 +29,7 @@ const createDocumentSchema = z.object({
 
 type CreateDocumentData = z.infer<typeof createDocumentSchema>;
 
-export default function CreateDocumentPage() {
+function CreateDocumentPageContent() {
   const router = useRouter();
   const { user, agent } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
@@ -661,8 +662,11 @@ export default function CreateDocumentPage() {
                       <Input
                         {...register('title')}
                         placeholder="Enter document title"
-                        error={errors.title?.message}
+                        aria-invalid={errors.title ? 'true' : 'false'}
                       />
+                      {errors.title && (
+                        <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+                      )}
                     </div>
 
                     <div>
@@ -955,5 +959,13 @@ export default function CreateDocumentPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CreateDocumentPage() {
+  return (
+    <PageErrorBoundary>
+      <CreateDocumentPageContent />
+    </PageErrorBoundary>
   );
 }

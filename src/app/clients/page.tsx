@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,10 +14,11 @@ import QuickActions from '@/components/clients/QuickActions'
 import LeadScoringSystem from '@/components/clients/LeadScoringSystem'
 import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
+import { PageErrorBoundary } from '@/components/error/withErrorBoundary'
 
 type Client = Database['public']['Tables']['clients']['Row']
 
-export default function ClientsPage() {
+function ClientsPageContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const isHydrated = useHydration()
@@ -42,13 +43,13 @@ export default function ClientsPage() {
     if (user) {
       fetchClients()
     }
-  }, [user])
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     filterClients()
-  }, [clients, searchTerm, selectedType, selectedStatus])
+  }, [clients, searchTerm, selectedType, selectedStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setIsLoading(true)
       
@@ -78,7 +79,7 @@ export default function ClientsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user])
 
   const handleAddClient = () => {
     setEditingClient(null)
@@ -107,7 +108,7 @@ export default function ClientsPage() {
     setEditingClient(null)
   }
 
-  const filterClients = () => {
+  const filterClients = useCallback(() => {
     let filtered = clients
 
     // Search filter
@@ -131,7 +132,7 @@ export default function ClientsPage() {
     }
 
     setFilteredClients(filtered)
-  }
+  }, [clients, searchTerm, selectedType, selectedStatus])
 
   const getClientTypeIcon = (type: string) => {
     switch (type) {
@@ -409,5 +410,13 @@ export default function ClientsPage() {
           />
         )}
       </div>
+  )
+}
+
+export default function ClientsPage() {
+  return (
+    <PageErrorBoundary>
+      <ClientsPageContent />
+    </PageErrorBoundary>
   )
 } 

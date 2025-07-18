@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import PropertyAgentManager from '@/components/properties/PropertyAgentManager'
 import PropertyInterestedClients from '@/components/properties/PropertyInterestedClients'
+import Image from 'next/image'
 
 type Property = Database['public']['Tables']['properties']['Row']
 
@@ -262,11 +263,13 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {photos.map((photo, index) => (
-                      <div key={`photo-${property.id}-${index}`} className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                        <img
+                      <div key={`photo-${property.id}-${index}`} className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative">
+                        <Image
                           src={photo}
                           alt={`Property photo ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                       </div>
                     ))}

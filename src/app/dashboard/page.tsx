@@ -6,8 +6,9 @@ import { useEffect } from 'react'
 import AgentDashboard from '@/components/dashboard/AgentDashboard'
 import { useHydration } from '@/hooks/useHydration'
 import MainNavigation from '@/components/navigation/MainNavigation'
+import { PageErrorBoundary } from '@/components/error/withErrorBoundary'
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const isHydrated = useHydration()
@@ -58,5 +59,13 @@ export default function DashboardPage() {
         <AgentDashboard />
       </main>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <PageErrorBoundary>
+      <DashboardPageContent />
+    </PageErrorBoundary>
   )
 }
