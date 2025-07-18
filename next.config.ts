@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -26,4 +27,27 @@ const nextConfig: NextConfig = {
   compress: true,
 };
 
-export default nextConfig;
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  // Additional config options for the Sentry Webpack plugin
+  silent: true, // Suppresses all logs
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  
+  // Upload source maps to Sentry
+  widenClientFileUpload: true,
+  
+  // Transpile SDK to be compatible with IE11
+  transpileClientSDK: true,
+  
+  // Hide source maps from generated client bundles
+  hideSourceMaps: true,
+  
+  // Automatically tree-shake Sentry logger statements
+  disableLogger: true,
+  
+  // Enable automatic instrumentation of Vercel Cron Monitors
+  automaticVercelMonitors: true,
+};
+
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);

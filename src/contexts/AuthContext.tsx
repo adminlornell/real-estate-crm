@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { User } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import { setSentryUser, clearSentryUser, reportAuthError, addBreadcrumb } from '@/lib/sentry'
 
 export interface AuthUser extends User {
   role?: 'agent' | 'team_lead' | 'manager' | 'admin' | 'client'
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchAgentData = async (userId: string) => {
     try {
-      console.log('AuthContext: Fetching agent data for user ID:', userId)
+      addBreadcrumb('Fetching agent data', 'auth', 'info', { userId })
       
       const { data: agentData, error } = await supabase
         .from('agents')
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
       
       if (error && error.code === 'PGRST116') {
-        console.log('AuthContext: No agent record found, creating new one')
+        addBreadcrumb('No agent record found, creating new one', 'auth', 'info')
         // Get user data for email
         const { data: { user: currentUser } } = await supabase.auth.getUser()
         
@@ -59,21 +60,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single()
         
         if (createError) {
-          console.error('AuthContext: Error creating agent record:', createError)
+          reportAuthError(createError as Error, {
+            operation: 'signup',
+            userId
+          })
           throw createError
         }
         
-        console.log('AuthContext: Agent record created successfully:', newAgent)
+        addBreadcrumb('Agent record created successfully', 'auth', 'info', {
+          agentId: newAgent.id,
+          agentName: newAgent.agent_name
+        })
         setAgent(newAgent)
       } else if (error) {
-        console.error('AuthContext: Error fetching agent data:', error)
+        reportAuthError(error as Error, {
+          operation: 'login',
+          userId
+        })
         throw error
       } else {
-        console.log('AuthContext: Agent data fetched successfully:', agentData)
+        addBreadcrumb('Agent data fetched successfully', 'auth', 'info', {
+          agentId: agentData.id,
+          agentName: agentData.agent_name
+        })
         setAgent(agentData)
       }
     } catch (error) {
-      console.error('AuthContext: Failed to fetch/create agent data:', error)
+      reportAuthError(error as Error, {
+        operation: 'login',
+        userId
+      })
       // Don't throw here - we can continue without agent data
       setAgent(null)
     }
@@ -122,16 +138,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const currentUser = session?.user as AuthUser || null
-      console.log('AuthContext: Session check complete. User:', currentUser ? 'found' : 'not found')
+      addBreadcrumb('Session check complete', 'auth', 'info', {
+        userFound: !!currentUser,
+        userId: currentUser?.id
+      })
+      
       setUser(currentUser)
       
-      // Fetch agent data if user exists, but don't block on it
+      // Set Sentry user context
       if (currentUser) {
+        setSentryUser({
+          id: currentUser.id,
+          email: currentUser.email,
+          username: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0],
+          role: 'agent'
+        })
+        
         fetchAgentData(currentUser.id).catch(error => {
-          console.error('AuthContext: Error fetching agent data:', error)
+          reportAuthError(error as Error, {
+            operation: 'login',
+            userId: currentUser.id
+          })
           // Continue without agent data
         })
       } else {
+        clearSentryUser()
         setAgent(null)
       }
       
@@ -176,10 +207,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const user = session?.user as AuthUser || null
           setUser(user)
+          
           if (user) {
-            fetchAgentData(user.id).catch(console.error)
+            addBreadcrumb('User signed in', 'auth', 'info', {
+              userId: user.id,
+              email: user.email
+            })
+            
+            setSentryUser({
+              id: user.id,
+              email: user.email,
+              username: user.user_metadata?.full_name || user.email?.split('@')[0],
+              role: 'agent'
+            })
+            
+            fetchAgentData(user.id).catch(error => {
+              reportAuthError(error as Error, {
+                operation: 'login',
+                userId: user.id
+              })
+            })
           }
         } else if (event === 'SIGNED_OUT') {
+          addBreadcrumb('User signed out', 'auth', 'info')
+          clearSentryUser()
           setUser(null)
           setAgent(null)
         }
@@ -193,63 +244,134 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     setConnectionError(null)
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
     
-    if (error) {
-      console.error('AuthContext: Sign in error:', error)
-      if (error.message.includes('timeout') || error.message.includes('network')) {
-        setConnectionError('Authentication timed out. Please check your connection and try again.')
+    try {
+      addBreadcrumb('Attempting user sign in', 'auth', 'info', { email })
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      
+      if (error) {
+        reportAuthError(error as Error, {
+          operation: 'login',
+          provider: 'email'
+        })
+        
+        if (error.message.includes('timeout') || error.message.includes('network')) {
+          setConnectionError('Authentication timed out. Please check your connection and try again.')
+        }
+        throw error
       }
+      
+      addBreadcrumb('User sign in successful', 'auth', 'info', {
+        userId: data.user?.id,
+        email: data.user?.email
+      })
+      
+      return data
+    } catch (error) {
+      reportAuthError(error as Error, {
+        operation: 'login',
+        provider: 'email'
+      })
       throw error
     }
-    
-    return data
   }
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     setConnectionError(null)
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    })
     
-    if (error) {
-      console.error('AuthContext: Sign up error:', error)
+    try {
+      addBreadcrumb('Attempting user sign up', 'auth', 'info', { email })
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      })
+      
+      if (error) {
+        reportAuthError(error as Error, {
+          operation: 'signup',
+          provider: 'email'
+        })
+        throw error
+      }
+      
+      addBreadcrumb('User sign up successful', 'auth', 'info', {
+        userId: data.user?.id,
+        email: data.user?.email
+      })
+      
+      return data
+    } catch (error) {
+      reportAuthError(error as Error, {
+        operation: 'signup',
+        provider: 'email'
+      })
       throw error
     }
-    
-    return data
   }
 
   const signOut = async () => {
     setConnectionError(null)
-    const { error } = await supabase.auth.signOut()
     
-    if (error) {
-      console.error('AuthContext: Sign out error:', error)
+    try {
+      addBreadcrumb('Attempting user sign out', 'auth', 'info')
+      
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        reportAuthError(error as Error, {
+          operation: 'logout',
+          userId: user?.id
+        })
+        throw error
+      }
+      
+      addBreadcrumb('User sign out successful', 'auth', 'info')
+      clearSentryUser()
+      setUser(null)
+      setAgent(null)
+    } catch (error) {
+      reportAuthError(error as Error, {
+        operation: 'logout',
+        userId: user?.id
+      })
       throw error
     }
-    
-    setUser(null)
-    setAgent(null)
   }
 
   const resetPassword = async (email: string) => {
     setConnectionError(null)
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email)
     
-    if (error) {
-      console.error('AuthContext: Reset password error:', error)
+    try {
+      addBreadcrumb('Attempting password reset', 'auth', 'info', { email })
+      
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email)
+      
+      if (error) {
+        reportAuthError(error as Error, {
+          operation: 'reset',
+          provider: 'email'
+        })
+        throw error
+      }
+      
+      addBreadcrumb('Password reset successful', 'auth', 'info', { email })
+      
+      return data
+    } catch (error) {
+      reportAuthError(error as Error, {
+        operation: 'reset',
+        provider: 'email'
+      })
       throw error
     }
-    
-    return data
   }
 
   const value = {
